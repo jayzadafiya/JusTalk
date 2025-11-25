@@ -22,11 +22,11 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "@models/*": ["src/models/*"],
-      "@routes/*": ["src/routes/*"],
+      "@config/*": ["src/config/*"],
       "@middleware/*": ["src/middleware/*"],
-      "@socket/*": ["src/socket/*"],
-      "@config/*": ["src/config/*"]
+      "@utils/*": ["src/utils/*"],
+      "@common/*": ["src/common/*"],
+      "@user/*": ["src/user/*"]
     }
   },
   "include": ["src/**/*"],
