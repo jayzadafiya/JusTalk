@@ -1,12 +1,12 @@
 import { config } from "@config/env.js";
-import User from "./user.model";
+import User from "@user/user.model";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import {
   ConflictError,
   UnauthorizedError,
   ForbiddenError,
-} from "../utils/errors";
+} from "@utils/errors";
 
 export class UserService {
   async createUser(userData: {

@@ -15,6 +15,9 @@ const Login = lazy(() =>
 const Signup = lazy(() =>
   import("@page/Signup").then((module) => ({ default: module.Signup }))
 );
+const VideoRoom = lazy(() =>
+  import("@page/VideoRoom").then((module) => ({ default: module.VideoRoom }))
+);
 
 const LoadingFallback = () => (
   <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -58,6 +61,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/room/:code"
+            element={
+              <ProtectedRoute>
+                <VideoRoom />
               </ProtectedRoute>
             }
           />

@@ -26,7 +26,9 @@
       "@middleware/*": ["src/middleware/*"],
       "@utils/*": ["src/utils/*"],
       "@common/*": ["src/common/*"],
-      "@user/*": ["src/user/*"]
+      "@user/*": ["src/user/*"],
+      "@socket/*": ["src/socket/*"],
+      "@room/*": ["src/room/*"]
     }
   },
   "include": ["src/**/*"],

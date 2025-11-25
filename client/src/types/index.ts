@@ -79,3 +79,60 @@ export interface Board {
   updatedAt: Date;
   members: string[];
 }
+
+// Room related types
+export interface Room {
+  _id: string;
+  code: string;
+  name: string;
+  createdBy: User | string;
+  participants: User[] | string[];
+  connectedUsers: User[] | string[];
+  maxParticipants: number;
+  hasPassword?: boolean;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateRoomData {
+  name: string;
+  password?: string;
+  maxParticipants?: number;
+}
+
+export interface JoinRoomData {
+  code: string;
+  password?: string;
+}
+
+export interface Participant {
+  socketId: string;
+  userId: string;
+  username: string;
+}
+export interface RoomResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    room: Room;
+  };
+  errors?: Array<{
+    field?: string;
+    message: string;
+  }>;
+  field?: string;
+}
+
+export interface RemoteVideoProps {
+  peer: {
+    socketId: string;
+    userId: string;
+    username: string;
+    stream?: MediaStream;
+  };
+  mediaState?: {
+    audioEnabled: boolean;
+    videoEnabled: boolean;
+  };
+}

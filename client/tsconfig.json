@@ -30,7 +30,9 @@
       "@data/*": ["src/data/*"],
       "@lib/*": ["src/lib/*"],
       "@types": ["src/types"],
-      "@components/*": ["src/components/*"]
+      "@components/*": ["src/components/*"],
+      "@services/*": ["src/services/*"],
+      "@hooks/*": ["src/hooks/*"]
     }
   },
   "include": ["src"],
