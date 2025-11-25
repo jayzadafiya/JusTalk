@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import userService from "./user.service";
-import { asyncHandler } from "../utils/asyncHandler";
-import { NotFoundError } from "../utils/errors";
+import userService from "@user/user.service";
+import { asyncHandler } from "@utils/asyncHandler";
+import { NotFoundError } from "@utils/errors";
 
 export const signup = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {

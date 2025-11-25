@@ -1,0 +1,450 @@
+import { useEffect, useRef, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAppSelector } from "@store/hooks";
+import { socketService } from "@services/socket.service";
+import { useWebRTC } from "@hooks/useWebRTC";
+import RemoteVideo from "@components/RemoteVideo";
+import {
+  Mic,
+  MicOff,
+  Video,
+  VideoOff,
+  PhoneOff,
+  AlertCircle,
+} from "lucide-react";
+import type { Participant } from "@/types";
+
+export const VideoRoom = () => {
+  const { code } = useParams<{ code: string }>();
+  const navigate = useNavigate();
+  const user = useAppSelector((state) => state.auth.user);
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const [error, setError] = useState<string>("");
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [callEnded, setCallEnded] = useState(false);
+  const [peerMediaStates, setPeerMediaStates] = useState<
+    Map<string, { audioEnabled: boolean; videoEnabled: boolean }>
+  >(new Map());
+  const {
+    localStream,
+    peers,
+    isAudioEnabled,
+    isVideoEnabled,
+    startLocalStream,
+    addPeer,
+    removePeer,
+    createOffer,
+    handleOffer,
+    handleAnswer,
+    handleIceCandidate,
+    toggleAudio,
+    toggleVideo,
+    cleanup,
+  } = useWebRTC(code || "", user?._id || "", user?.username || "");
+
+  useEffect(() => {
+    if (localVideoRef.current && localStream) {
+      console.log("Setting local video stream:", localStream);
+      localVideoRef.current.srcObject = localStream;
+      localVideoRef.current.play().catch((err) => {
+        console.error("Error playing local video:", err);
+      });
+    }
+  }, [localStream]);
+
+  useEffect(() => {
+    if (!user || !code) {
+      navigate("/");
+      return;
+    }
+
+    let mounted = true;
+
+    const initializeRoom = async () => {
+      try {
+        setIsInitializing(true);
+        setError("");
+
+        const stream = await startLocalStream();
+
+        if (!mounted) return;
+
+        if (localVideoRef.current && stream) {
+          localVideoRef.current.srcObject = stream;
+          localVideoRef.current
+            .play()
+            .catch((err) => console.log("Local video play error:", err));
+        }
+
+        const socket = socketService.connect();
+
+        const handleExistingParticipants = (participants: Participant[]) => {
+          participants.forEach((participant) => {
+            const peer = addPeer(
+              participant.socketId,
+              participant.userId,
+              participant.username
+            );
+            createOffer(peer, stream);
+          });
+        };
+
+        const handleNewPeer = ({ socketId, userId, username }: Participant) => {
+          console.log("New peer joined:", username);
+          addPeer(socketId, userId, username);
+        };
+
+        const handleOfferReceived = ({
+          offer,
+          senderSocketId,
+        }: {
+          offer: RTCSessionDescriptionInit;
+          senderSocketId: string;
+        }) => {
+          handleOffer(offer, senderSocketId, stream);
+        };
+
+        const handleAnswerReceived = ({
+          answer,
+          senderSocketId,
+        }: {
+          answer: RTCSessionDescriptionInit;
+          senderSocketId: string;
+        }) => {
+          handleAnswer(answer, senderSocketId);
+        };
+
+        const handleIceCandidateReceived = ({
+          candidate,
+          senderSocketId,
+        }: {
+          candidate: RTCIceCandidateInit;
+          senderSocketId: string;
+        }) => {
+          handleIceCandidate(candidate, senderSocketId);
+        };
+
+        const handlePeerDisconnect = ({ socketId }: { socketId: string }) => {
+          console.log("Peer disconnected:", socketId);
+          removePeer(socketId);
+          setPeerMediaStates((prev) => {
+            const updated = new Map(prev);
+            updated.delete(socketId);
+            return updated;
+          });
+        };
+
+        const handlePeerMediaState = ({
+          socketId,
+          audioEnabled,
+          videoEnabled,
+        }: {
+          socketId: string;
+          audioEnabled: boolean;
+          videoEnabled: boolean;
+        }) => {
+          console.log(
+            `Peer ${socketId} media state - Audio: ${audioEnabled}, Video: ${videoEnabled}`
+          );
+          setPeerMediaStates((prev) => {
+            const updated = new Map(prev);
+            updated.set(socketId, { audioEnabled, videoEnabled });
+            return updated;
+          });
+        };
+
+        const handleRoomEnded = () => {
+          console.log("Room ended - all participants left");
+          if (mounted) {
+            setCallEnded(true);
+          }
+        };
+
+        socket.on("existing-participants", handleExistingParticipants);
+        socket.on("new-peer", handleNewPeer);
+        socket.on("offer", handleOfferReceived);
+        socket.on("answer", handleAnswerReceived);
+        socket.on("ice-candidate", handleIceCandidateReceived);
+        socket.on("peer-disconnect", handlePeerDisconnect);
+        socket.on("peer-media-state", handlePeerMediaState);
+        socket.on("room-ended", handleRoomEnded);
+
+        socket.emit("join-room", {
+          roomCode: code,
+          userId: user._id,
+          username: user.username,
+        });
+
+        socket.emit("media-state", {
+          roomCode: code,
+          audioEnabled: isAudioEnabled,
+          videoEnabled: isVideoEnabled,
+        });
+
+        if (mounted) {
+          setIsInitializing(false);
+        }
+
+        return () => {
+          socket.off("existing-participants", handleExistingParticipants);
+          socket.off("new-peer", handleNewPeer);
+          socket.off("offer", handleOfferReceived);
+          socket.off("answer", handleAnswerReceived);
+          socket.off("ice-candidate", handleIceCandidateReceived);
+          socket.off("peer-disconnect", handlePeerDisconnect);
+          socket.off("peer-media-state", handlePeerMediaState);
+          socket.off("room-ended", handleRoomEnded);
+        };
+      } catch (error: any) {
+        console.error("Error initializing room:", error);
+        if (mounted) {
+          setError(error.message || "Failed to initialize video call");
+          setIsInitializing(false);
+        }
+      }
+    };
+
+    const cleanupPromise = initializeRoom();
+
+    return () => {
+      mounted = false;
+      cleanupPromise.then((cleanupFn) => {
+        if (cleanupFn) cleanupFn();
+      });
+      socketService.emit("leave-room", { roomCode: code });
+      cleanup();
+      socketService.disconnect();
+    };
+  }, [code, user, navigate]);
+
+  const handleLeaveRoom = () => {
+    socketService.emit("leave-room", { roomCode: code });
+    cleanup();
+    navigate("/");
+  };
+
+  const handleRetry = () => {
+    window.location.reload();
+  };
+
+  if (error) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-slate-900">
+        <div className="max-w-md p-6 bg-slate-800 rounded-lg border border-slate-700">
+          <div className="flex items-start gap-3 mb-4">
+            <AlertCircle
+              size={24}
+              className="text-red-500 flex-shrink-0 mt-0.5"
+            />
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-2">
+                Unable to Join Room
+              </h3>
+              <p className="text-slate-300 text-sm mb-4">{error}</p>
+              <div className="text-xs text-slate-400 mb-4">
+                <p className="mb-2">Common solutions:</p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>
+                    Close other apps using your camera/microphone (Zoom, Teams,
+                    Skype, etc.)
+                  </li>
+                  <li>
+                    Close other browser tabs that might be using your camera
+                  </li>
+                  <li>Check browser permissions for camera and microphone</li>
+                  <li>Restart your browser if the issue persists</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={handleRetry}
+              className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            >
+              Try Again
+            </button>
+            <button
+              onClick={() => navigate("/")}
+              className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isInitializing) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-slate-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-white">Initializing video call...</p>
+          <p className="text-slate-400 text-sm mt-2">
+            Please allow camera and microphone access
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (callEnded) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-slate-900">
+        <div className="text-center">
+          <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+            <PhoneOff size={40} className="text-slate-500" />
+          </div>
+          <h2 className="text-2xl font-semibold text-white mb-2">Call Ended</h2>
+          <p className="text-slate-400 mb-6">
+            All participants have left the room
+          </p>
+          <button
+            onClick={() => navigate("/")}
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
+            Return to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-screen flex flex-col bg-slate-900">
+      <div className="h-16 bg-slate-800 border-b border-slate-700 px-6 flex items-center justify-between">
+        <div>
+          <h2 className="text-white font-medium">Room: {code}</h2>
+          <p className="text-sm text-slate-400">
+            {peers.size + 1} participant{peers.size !== 0 ? "s" : ""}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex-1 p-4 overflow-auto bg-slate-900">
+        <div
+          className={`grid gap-3 h-full auto-rows-fr ${
+            peers.size === 0
+              ? "grid-cols-1"
+              : peers.size === 1
+              ? "grid-cols-1 md:grid-cols-2"
+              : peers.size === 2
+              ? "grid-cols-1 md:grid-cols-2"
+              : peers.size === 3
+              ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-2"
+              : peers.size <= 5
+              ? "grid-cols-2 md:grid-cols-3"
+              : peers.size <= 8
+              ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+              : "grid-cols-2 md:grid-cols-4"
+          }`}
+        >
+          <div className="relative bg-slate-800 rounded-xl overflow-hidden shadow-lg border-2 border-blue-600">
+            <div className="w-full h-full min-h-[200px] relative">
+              {localStream && (
+                <video
+                  ref={localVideoRef}
+                  autoPlay
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover transform scale-x-[-1] bg-black"
+                  onLoadedMetadata={() => {
+                    console.log("Local video metadata loaded");
+                    if (localVideoRef.current) {
+                      console.log(
+                        "Video dimensions:",
+                        localVideoRef.current.videoWidth,
+                        "x",
+                        localVideoRef.current.videoHeight
+                      );
+                    }
+                  }}
+                  onPlay={() => console.log("Local video is playing")}
+                  onError={(e) => console.error("Video element error:", e)}
+                />
+              )}
+              {!localStream && (
+                <div className="absolute inset-0 flex items-center justify-center bg-slate-700">
+                  <div className="text-center">
+                    <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <span className="text-white font-bold text-3xl">
+                        {user?.firstName?.charAt(0).toUpperCase() || "Y"}
+                      </span>
+                    </div>
+                    <p className="text-slate-400 text-sm">
+                      Initializing camera...
+                    </p>
+                  </div>
+                </div>
+              )}
+              {!isVideoEnabled && localStream && (
+                <div className="absolute inset-0 flex items-center justify-center bg-slate-700 z-10">
+                  <div className="text-center">
+                    <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <span className="text-white font-bold text-3xl">
+                        {user?.firstName?.charAt(0).toUpperCase() || "Y"}
+                      </span>
+                    </div>
+                    <VideoOff size={32} className="text-slate-400 mx-auto" />
+                  </div>
+                </div>
+              )}
+              <div className="absolute top-3 left-3 bg-blue-600 px-3 py-1.5 rounded-lg text-sm font-medium text-white shadow-lg z-20">
+                You {!isVideoEnabled && "(Camera off)"}
+              </div>
+              {!isAudioEnabled && (
+                <div className="absolute top-3 right-3 bg-red-600 p-2 rounded-lg shadow-lg z-20">
+                  <MicOff size={16} className="text-white" />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {Array.from(peers.values()).map((peer) => (
+            <RemoteVideo
+              key={peer.socketId}
+              peer={peer}
+              mediaState={peerMediaStates.get(peer.socketId)}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="h-20 bg-slate-800 border-t border-slate-700 flex items-center justify-center gap-3 px-4">
+        <button
+          onClick={toggleAudio}
+          className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-lg ${
+            isAudioEnabled
+              ? "bg-slate-700 hover:bg-slate-600 text-white"
+              : "bg-red-600 hover:bg-red-700 text-white"
+          }`}
+          title={isAudioEnabled ? "Mute" : "Unmute"}
+        >
+          {isAudioEnabled ? <Mic size={22} /> : <MicOff size={22} />}
+        </button>
+
+        <button
+          onClick={toggleVideo}
+          className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-lg ${
+            isVideoEnabled
+              ? "bg-slate-700 hover:bg-slate-600 text-white"
+              : "bg-red-600 hover:bg-red-700 text-white"
+          }`}
+          title={isVideoEnabled ? "Stop Video" : "Start Video"}
+        >
+          {isVideoEnabled ? <Video size={22} /> : <VideoOff size={22} />}
+        </button>
+
+        <button
+          onClick={handleLeaveRoom}
+          className="w-14 h-14 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center transition-all shadow-lg"
+          title="Leave Call"
+        >
+          <PhoneOff size={22} />
+        </button>
+      </div>
+    </div>
+  );
+};
