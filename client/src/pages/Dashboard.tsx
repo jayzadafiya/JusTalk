@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Video, MessageSquare, Users, Plus, Hash } from "lucide-react";
-import { CreateRoom } from "@components/CreateRoom";
-import { JoinRoom } from "@components/JoinRoom";
-import { Button } from "@components/Button";
+import CreateRoom from "@components/forms/CreateRoom";
+import JoinRoom from "@components/forms/JoinRoom";
+import { Button } from "@components/ui/Button";
 import { getUserRooms } from "@services/room.service";
 import type { Room, User } from "@types";
 import { useNavigate } from "react-router-dom";

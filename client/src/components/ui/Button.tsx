@@ -28,19 +28,19 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      "font-medium rounded-lg transition-colors flex items-center  gap-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900";
+      "font-medium rounded-lg transition-colors flex items-center  gap-1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900";
 
     const variantStyles = {
       primary:
-        "bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 text-white focus:ring-blue-500",
+        "bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 text-white focus:ring-blue-500 justify-center",
       secondary:
-        "bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 text-white focus:ring-slate-500",
+        "bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 text-white focus:ring-slate-500 justify-center",
       outline:
-        "border-2 border-blue-600 hover:bg-blue-600/10 disabled:border-slate-700 disabled:text-slate-600 text-blue-600 focus:ring-blue-500",
+        "border-2 border-blue-600 hover:bg-blue-600/10 disabled:border-slate-700 disabled:text-slate-600 text-blue-600 focus:ring-blue-500 justify-center",
       ghost:
         "hover:bg-slate-800 disabled:text-slate-600 text-slate-300 focus:ring-slate-500 justify-start",
       danger:
-        "bg-red-600 hover:bg-red-700 disabled:bg-slate-700 text-white focus:ring-red-500",
+        "bg-red-600 hover:bg-red-700 disabled:bg-slate-700 text-white focus:ring-red-500 justify-center",
     };
 
     const sizeStyles = {

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAppSelector, useAppDispatch } from "@store/hooks";
 import { logout as logoutAction } from "@store/slices/authSlice";
 import { logout as logoutApi } from "@services/auth.service";
-import { Button } from "@components/Button";
+import { Button } from "@components/ui/Button";
 
 interface MobileMenuDrawerProps {
   isOpen: boolean;

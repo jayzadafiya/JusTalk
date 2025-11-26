@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { joinRoom as joinRoomApi } from "@services/room.service";
 import type { JoinRoomData } from "@types";
 import { Lock } from "lucide-react";
-import { Input } from "@components/Input";
-import { Button } from "@components/Button";
+import { Input } from "@components/ui/Input";
+import { Button } from "@components/ui/Button";
 
 export const JoinRoom = () => {
   const navigate = useNavigate();

@@ -3,8 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAppSelector } from "@store/hooks";
 import { socketService } from "@services/socket.service";
 import { useWebRTC } from "@hooks/useWebRTC";
-import RemoteVideo from "@components/RemoteVideo";
-import { Button } from "@components/Button";
+import RemoteVideo from "@components/media/RemoteVideo";
+import { Button } from "@components/ui/Button";
 import {
   Mic,
   MicOff,

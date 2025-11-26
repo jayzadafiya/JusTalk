@@ -6,8 +6,8 @@ import { login as loginApi } from "@services/auth.service";
 import { FormValidator } from "@lib/validation";
 import type { LoginData } from "@types";
 import { Eye, EyeOff, XCircle, AlertCircle } from "lucide-react";
-import { Input } from "@components/Input";
-import { Button } from "@components/Button";
+import { Input } from "@components/ui/Input";
+import { Button } from "@components/ui/Button";
 
 export const Login = () => {
   const navigate = useNavigate();
@@ -167,7 +167,7 @@ export const Login = () => {
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-3 text-center">
             <span className="text-slate-400 text-xs sm:text-sm">
               Don't have an account?{" "}
             </span>

@@ -1,9 +1,9 @@
 import { Outlet } from "react-router-dom";
 import { useState } from "react";
-import { Header } from "@components/Header";
-import { Sidebar } from "@components/Sidebar";
-import { MobileBottomBar } from "@components/MobileBottomBar";
-import { MobileMenuDrawer } from "@components/MobileMenuDrawer";
+import { Header } from "@components/navigation/Header";
+import { Sidebar } from "@components/navigation/Sidebar";
+import { MobileBottomBar } from "@components/navigation/MobileBottomBar";
+import { MobileMenuDrawer } from "@components/navigation/MobileMenuDrawer";
 import { useIsMobile } from "@hooks/useIsMobile";
 
 interface LayoutProps {

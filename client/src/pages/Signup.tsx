@@ -6,8 +6,8 @@ import { signup, checkUsername } from "@services/auth.service";
 import { FormValidator } from "@lib/validation";
 import type { SignupData } from "@types";
 import { Eye, EyeOff, CheckCircle, XCircle, Loader2 } from "lucide-react";
-import { Input } from "@components/Input";
-import { Button } from "@components/Button";
+import { Input } from "@components/ui/Input";
+import { Button } from "@components/ui/Button";
 
 export const Signup = () => {
   const navigate = useNavigate();
@@ -338,7 +338,7 @@ export const Signup = () => {
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-3 text-center">
             <span className="text-slate-400 text-xs sm:text-sm">
               Already have an account?{" "}
             </span>

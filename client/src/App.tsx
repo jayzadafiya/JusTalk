@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { ProtectedRoute } from "@components/ProtectedRoute";
-import AppRoutes from "@components/AppRoutes";
+import { ProtectedRoute } from "@components/routing/ProtectedRoute";
+import AppRoutes from "@components/routing/AppRoutes";
 import { useAppDispatch } from "@store/hooks";
 import { setUser } from "@store/slices/authSlice";
 import { getProfile, isAuthenticated } from "./services/auth.service";

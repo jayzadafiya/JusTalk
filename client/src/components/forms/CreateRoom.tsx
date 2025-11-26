@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { createRoom } from "@services/room.service";
 import type { CreateRoomData } from "@types";
 import { Copy, Check } from "lucide-react";
-import { Input } from "@components/Input";
-import { Button } from "@components/Button";
+import { Input } from "@components/ui/Input";
+import { Button } from "@components/ui/Button";
 
 export const CreateRoom = () => {
   const navigate = useNavigate();
