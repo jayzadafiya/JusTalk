@@ -4,6 +4,7 @@ import { useAppSelector } from "@store/hooks";
 import { socketService } from "@services/socket.service";
 import { useWebRTC } from "@hooks/useWebRTC";
 import RemoteVideo from "@components/RemoteVideo";
+import { Button } from "@components/Button";
 import {
   Mic,
   MicOff,
@@ -258,18 +259,16 @@ export const VideoRoom = () => {
             </div>
           </div>
           <div className="flex gap-3">
-            <button
-              onClick={handleRetry}
-              className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-            >
+            <Button onClick={handleRetry} className="flex-1">
               Try Again
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={() => navigate("/")}
-              className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+              variant="secondary"
+              className="flex-1"
             >
               Go Back
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -301,12 +300,9 @@ export const VideoRoom = () => {
           <p className="text-slate-400 mb-6">
             All participants have left the room
           </p>
-          <button
-            onClick={() => navigate("/")}
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-          >
+          <Button onClick={() => navigate("/")} size="lg">
             Return to Dashboard
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -402,7 +398,7 @@ export const VideoRoom = () => {
             </div>
           </div>
 
-          {Array.from(peers.values()).map((peer) => (
+          {[...peers.values()].map((peer) => (
             <RemoteVideo
               key={peer.socketId}
               peer={peer}
@@ -413,37 +409,32 @@ export const VideoRoom = () => {
       </div>
 
       <div className="h-20 bg-slate-800 border-t border-slate-700 flex items-center justify-center gap-3 px-4">
-        <button
+        <Button
           onClick={toggleAudio}
-          className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-lg ${
-            isAudioEnabled
-              ? "bg-slate-700 hover:bg-slate-600 text-white"
-              : "bg-red-600 hover:bg-red-700 text-white"
-          }`}
+          variant={isAudioEnabled ? "secondary" : "danger"}
+          className="w-14 h-14 p-0 rounded-full"
           title={isAudioEnabled ? "Mute" : "Unmute"}
         >
           {isAudioEnabled ? <Mic size={22} /> : <MicOff size={22} />}
-        </button>
+        </Button>
 
-        <button
+        <Button
           onClick={toggleVideo}
-          className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-lg ${
-            isVideoEnabled
-              ? "bg-slate-700 hover:bg-slate-600 text-white"
-              : "bg-red-600 hover:bg-red-700 text-white"
-          }`}
+          variant={isVideoEnabled ? "secondary" : "danger"}
+          className="w-14 h-14 p-0 rounded-full"
           title={isVideoEnabled ? "Stop Video" : "Start Video"}
         >
           {isVideoEnabled ? <Video size={22} /> : <VideoOff size={22} />}
-        </button>
+        </Button>
 
-        <button
+        <Button
           onClick={handleLeaveRoom}
-          className="w-14 h-14 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center transition-all shadow-lg"
+          variant="danger"
+          className="w-14 h-14 p-0 rounded-full"
           title="Leave Call"
         >
           <PhoneOff size={22} />
-        </button>
+        </Button>
       </div>
     </div>
   );

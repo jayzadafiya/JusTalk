@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createRoom } from "../services/room.service";
+import { createRoom } from "@services/room.service";
 import type { CreateRoomData } from "@types";
-import { Loader2, Copy, Check } from "lucide-react";
+import { Copy, Check } from "lucide-react";
+import { Input } from "@components/Input";
+import { Button } from "@components/Button";
 
 export const CreateRoom = () => {
   const navigate = useNavigate();
@@ -91,22 +93,25 @@ export const CreateRoom = () => {
               Room Code
             </label>
             <div className="flex gap-2">
-              <input
+              <Input
                 type="text"
                 value={roomCode}
                 readOnly
-                className="flex-1 px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white text-center text-2xl font-mono tracking-wider"
+                className="flex-1 text-center text-2xl font-mono tracking-wider bg-slate-900 border-slate-600"
+                containerClassName="flex-1"
               />
-              <button
+              <Button
                 onClick={copyCode}
-                className="px-4 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
+                variant="secondary"
+                size="md"
+                className="px-4"
               >
                 {copied ? (
                   <Check size={20} className="text-green-500" />
                 ) : (
                   <Copy size={20} className="text-slate-300" />
                 )}
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -114,12 +119,9 @@ export const CreateRoom = () => {
             Share this code with others to invite them to your room
           </p>
 
-          <button
-            onClick={joinRoom}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition-colors"
-          >
+          <Button onClick={joinRoom} fullWidth size="lg">
             Join Room
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -139,36 +141,29 @@ export const CreateRoom = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm text-slate-300 mb-2">Room Name</label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            className={`w-full px-4 py-2 bg-slate-900 border ${
-              errors.name ? "border-red-500" : "border-slate-700"
-            } rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-600`}
-            placeholder="Enter room name"
-          />
-          {errors.name && (
-            <p className="mt-1 text-sm text-red-500">{errors.name}</p>
-          )}
-        </div>
+        <Input
+          label="Room Name"
+          type="text"
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+          error={errors.name}
+          placeholder="Enter room name"
+        />
 
-        <div>
-          <label className="block text-sm text-slate-300 mb-2">
-            Password <span className="text-slate-500 text-xs">(optional)</span>
-          </label>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-600"
-            placeholder="Leave empty for no password"
-          />
-        </div>
+        <Input
+          label={
+            <>
+              Password{" "}
+              <span className="text-slate-500 text-xs">(optional)</span>
+            </>
+          }
+          type="password"
+          name="password"
+          value={formData.password}
+          onChange={handleChange}
+          placeholder="Leave empty for no password"
+        />
 
         <div>
           <label className="block text-sm text-slate-300 mb-2">
@@ -188,14 +183,9 @@ export const CreateRoom = () => {
           </select>
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
-        >
-          {loading && <Loader2 size={18} className="animate-spin" />}
+        <Button type="submit" loading={loading} fullWidth size="lg">
           {loading ? "Creating..." : "Create Room"}
-        </button>
+        </Button>
       </form>
     </div>
   );

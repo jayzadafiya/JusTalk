@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { joinRoom as joinRoomApi } from "../services/room.service";
+import { joinRoom as joinRoomApi } from "@services/room.service";
 import type { JoinRoomData } from "@types";
-import { Loader2, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
+import { Input } from "@components/Input";
+import { Button } from "@components/Button";
 
 export const JoinRoom = () => {
   const navigate = useNavigate();
@@ -76,54 +78,38 @@ export const JoinRoom = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm text-slate-300 mb-2">Room Code</label>
-          <input
-            type="text"
-            name="code"
-            value={formData.code}
-            onChange={handleChange}
-            maxLength={8}
-            className={`w-full px-4 py-3 bg-slate-900 border ${
-              errors.code ? "border-red-500" : "border-slate-700"
-            } rounded-lg text-white text-center text-2xl font-mono tracking-wider placeholder-slate-500 focus:outline-none focus:border-blue-600`}
-            placeholder="XXXXXX"
-          />
-          {errors.code && (
-            <p className="mt-1 text-sm text-red-500">{errors.code}</p>
-          )}
-        </div>
+        <Input
+          label="Room Code"
+          type="text"
+          name="code"
+          value={formData.code}
+          onChange={handleChange}
+          error={errors.code}
+          maxLength={8}
+          placeholder="XXXXXX"
+          className="text-center text-2xl font-mono tracking-wider"
+        />
 
         {requiresPassword && (
-          <div>
-            <label className="block text-sm text-slate-300 mb-2 flex items-center gap-2">
-              <Lock size={16} />
-              Password
-            </label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className={`w-full px-4 py-2 bg-slate-900 border ${
-                errors.password ? "border-red-500" : "border-slate-700"
-              } rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-600`}
-              placeholder="Enter room password"
-            />
-            {errors.password && (
-              <p className="mt-1 text-sm text-red-500">{errors.password}</p>
-            )}
-          </div>
+          <Input
+            label={
+              <span className="flex items-center gap-2">
+                <Lock size={16} />
+                Password
+              </span>
+            }
+            type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            error={errors.password}
+            placeholder="Enter room password"
+          />
         )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
-        >
-          {loading && <Loader2 size={18} className="animate-spin" />}
+        <Button type="submit" loading={loading} fullWidth size="lg">
           {loading ? "Joining..." : "Join Room"}
-        </button>
+        </Button>
       </form>
     </div>
   );

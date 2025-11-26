@@ -1,23 +1,18 @@
 import { useState, useEffect } from "react";
-import {
-  Video,
-  MessageSquare,
-  Users,
-  RefreshCw,
-  Plus,
-  Hash,
-} from "lucide-react";
-import { Sidebar } from "@components/Sidebar";
-import { Header } from "@components/Header";
+import { Video, MessageSquare, Users, Plus, Hash } from "lucide-react";
 import { CreateRoom } from "@components/CreateRoom";
 import { JoinRoom } from "@components/JoinRoom";
-import { getUserRooms } from "../services/room.service";
+import { Button } from "@components/Button";
+import { getUserRooms } from "@services/room.service";
 import type { Room, User } from "@types";
 import { useNavigate } from "react-router-dom";
-import { socketService } from "../services/socket.service";
+import { socketService } from "@services/socket.service";
 
-export const Dashboard = () => {
-  const [activeTab, setActiveTab] = useState<"video" | "chat">("video");
+interface DashboardProps {
+  activeTab: "video" | "chat";
+}
+
+export const Dashboard = ({ activeTab }: DashboardProps) => {
   const [showCreateRoom, setShowCreateRoom] = useState(false);
   const [showJoinRoom, setShowJoinRoom] = useState(false);
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -83,12 +78,8 @@ export const Dashboard = () => {
   };
 
   return (
-    <div className="h-screen flex bg-slate-900">
-      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
-
+    <div className="h-screen bg-slate-900">
       <div className="flex-1 flex flex-col">
-        <Header activeTab={activeTab} />
-
         <div className="flex-1 overflow-auto">
           {activeTab === "video" ? (
             <div className="h-full">
@@ -117,20 +108,21 @@ export const Dashboard = () => {
                     </div>
                     {rooms.length > 0 && (
                       <div className="flex gap-3">
-                        <button
+                        <Button
                           onClick={() => setShowCreateRoom(true)}
-                          className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
+                          size="md"
+                          leftIcon={<Plus size={16} />}
                         >
-                          <Plus size={16} />
                           Create Room
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           onClick={() => setShowJoinRoom(true)}
-                          className="px-4 py-2 bg-slate-700 text-white text-sm rounded-lg hover:bg-slate-600 transition-colors font-medium flex items-center gap-2"
+                          variant="secondary"
+                          size="md"
+                          leftIcon={<Hash size={16} />}
                         >
-                          <Hash size={16} />
                           Join with Code
-                        </button>
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -192,7 +184,6 @@ export const Dashboard = () => {
                               </div>
                             </div>
 
-                            {/* Host Info */}
                             {createdBy && (
                               <div className="mb-3 pb-3 border-b border-slate-700/50">
                                 <p className="text-xs text-slate-500 mb-1.5 font-medium">
@@ -222,7 +213,6 @@ export const Dashboard = () => {
                               </div>
                             )}
 
-                            {/* Participants */}
                             <div className="mb-4">
                               <div className="flex items-center justify-between mb-2">
                                 <p className="text-xs text-slate-500 font-medium">
@@ -311,7 +301,6 @@ export const Dashboard = () => {
                               )}
                             </div>
 
-                            {/* Footer with Status and Join Button */}
                             <div className="flex items-center justify-between pt-3 border-t border-slate-700/50">
                               <div className="flex items-center gap-1.5">
                                 {room.isActive ? (
