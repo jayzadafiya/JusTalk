@@ -2,10 +2,12 @@ import { useState } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useAppDispatch } from "@store/hooks";
 import { login as loginAction } from "@store/slices/authSlice";
-import { login as loginApi } from "../services/auth.service";
+import { login as loginApi } from "@services/auth.service";
 import { FormValidator } from "@lib/validation";
 import type { LoginData } from "@types";
-import { Eye, EyeOff, Loader2, XCircle, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, XCircle, AlertCircle } from "lucide-react";
+import { Input } from "@components/ui/Input";
+import { Button } from "@components/ui/Button";
 
 export const Login = () => {
   const navigate = useNavigate();
@@ -20,7 +22,6 @@ export const Login = () => {
   });
 
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
@@ -74,14 +75,6 @@ export const Login = () => {
           })
         );
 
-        if (rememberMe) {
-          localStorage.setItem("rememberMe", "true");
-          localStorage.setItem("savedUsername", formData.username);
-        } else {
-          localStorage.removeItem("rememberMe");
-          localStorage.removeItem("savedUsername");
-        }
-
         navigate("/");
       } else {
         if (result.errors) {
@@ -107,16 +100,18 @@ export const Login = () => {
 
   return (
     <div className="min-h-screen flex bg-slate-900">
-      <div className="flex-1 flex items-center justify-center px-4">
+      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8">
         <div className="w-full max-w-md">
-          <div className="mb-8">
-            <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-6">
-              <span className="text-white font-bold text-xl">J</span>
+          <div className="mb-6 sm:mb-8">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-4 sm:mb-6">
+              <span className="text-white font-bold text-lg sm:text-xl">J</span>
             </div>
-            <h2 className="text-2xl font-semibold text-white mb-2">
+            <h2 className="text-xl sm:text-2xl font-semibold text-white mb-2">
               Welcome back
             </h2>
-            <p className="text-slate-400">Sign in to your account</p>
+            <p className="text-sm sm:text-base text-slate-400">
+              Sign in to your account
+            </p>
           </div>
 
           {sessionExpired && (
@@ -135,88 +130,50 @@ export const Login = () => {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm text-slate-300 mb-2">
-                Username
-              </label>
-              <input
-                type="text"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-                className={`w-full px-4 py-2 bg-slate-800 border ${
-                  errors.username ? "border-red-500" : "border-slate-700"
-                } rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-600`}
-                placeholder="Enter username"
-                autoComplete="username"
-              />
-              {errors.username && (
-                <p className="mt-1 text-sm text-red-500">{errors.username}</p>
-              )}
-            </div>
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+            <Input
+              label="Username"
+              type="text"
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
+              error={errors.username}
+              placeholder="Enter username"
+              autoComplete="username"
+            />
 
-            <div>
-              <label className="block text-sm text-slate-300 mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-2 bg-slate-800 border ${
-                    errors.password ? "border-red-500" : "border-slate-700"
-                  } rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-600`}
-                  placeholder="Enter password"
-                  autoComplete="current-password"
-                />
+            <Input
+              label="Password"
+              type={showPassword ? "text" : "password"}
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              error={errors.password}
+              placeholder="Enter password"
+              autoComplete="current-password"
+              iconButton={
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-300"
+                  className="text-slate-400 hover:text-slate-300 py-3.5"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
-              </div>
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-500">{errors.password}</p>
-              )}
-            </div>
+              }
+            />
 
-            <div className="flex items-center justify-between">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 bg-slate-800 border-slate-700 rounded"
-                />
-                <span className="ml-2 text-sm text-slate-400">Remember me</span>
-              </label>
-              <a href="#" className="text-sm text-blue-500 hover:text-blue-400">
-                Forgot?
-              </a>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2"
-            >
-              {loading && <Loader2 size={18} className="animate-spin" />}
+            <Button type="submit" loading={loading} fullWidth>
               {loading ? "Logging in..." : "Login"}
-            </button>
+            </Button>
           </form>
 
-          <div className="mt-6 text-center">
-            <span className="text-slate-400 text-sm">
+          <div className="mt-3 text-center">
+            <span className="text-slate-400 text-xs sm:text-sm">
               Don't have an account?{" "}
             </span>
             <Link
               to="/signup"
-              className="text-blue-500 hover:text-blue-400 text-sm font-medium"
+              className="text-blue-500 hover:text-blue-400 text-xs sm:text-sm font-medium"
             >
               Sign up
             </Link>

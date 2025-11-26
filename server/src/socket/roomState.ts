@@ -39,7 +39,7 @@ export const getOtherParticipants = (roomCode: string, socketId: string) => {
   if (!rooms[roomCode]) {
     return [];
   }
-  return Array.from(rooms[roomCode].participants.values()).filter(
+  return [...rooms[roomCode].participants.values()].filter(
     (p) => p.socketId !== socketId
   );
 };
@@ -75,5 +75,5 @@ export const getAllParticipants = (roomCode: string) => {
   if (!rooms[roomCode]) {
     return [];
   }
-  return Array.from(rooms[roomCode].participants.values());
+  return [...rooms[roomCode].participants.values()];
 };

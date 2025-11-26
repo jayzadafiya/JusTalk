@@ -1,14 +1,12 @@
 import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { ProtectedRoute } from "@components/ProtectedRoute";
+import { ProtectedRoute } from "@components/routing/ProtectedRoute";
+import AppRoutes from "@components/routing/AppRoutes";
 import { useAppDispatch } from "@store/hooks";
 import { setUser } from "@store/slices/authSlice";
 import { getProfile, isAuthenticated } from "./services/auth.service";
 import "./App.css";
 
-const Dashboard = lazy(() =>
-  import("@page/Dashboard").then((module) => ({ default: module.Dashboard }))
-);
 const Login = lazy(() =>
   import("@page/Login").then((module) => ({ default: module.Login }))
 );
@@ -57,10 +55,10 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route
-            path="/"
+            path="/*"
             element={
               <ProtectedRoute>
-                <Dashboard />
+                <AppRoutes />
               </ProtectedRoute>
             }
           />
