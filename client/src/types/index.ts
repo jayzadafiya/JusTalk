@@ -1,3 +1,17 @@
+import { LucideIcon } from "lucide-react";
+
+//Input component props
+export interface InputProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: React.ReactNode;
+  error?: string;
+  icon?: LucideIcon;
+  iconPosition?: "left" | "right";
+  iconButton?: React.ReactNode;
+  helperText?: string;
+  containerClassName?: string;
+}
+
 // User related types
 export interface User {
   _id: string;
@@ -80,7 +94,7 @@ export interface Board {
   members: string[];
 }
 
-// Room related types
+// Room related
 export interface Room {
   _id: string;
   code: string;
@@ -135,4 +149,14 @@ export interface RemoteVideoProps {
     audioEnabled: boolean;
     videoEnabled: boolean;
   };
+}
+
+//Call related
+export interface Call {
+  _id: string;
+  participants: string[];
+  type: "incoming" | "outgoing" | "missed";
+  duration?: number;
+  timestamp: Date;
+  roomName?: string;
 }

@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAppSelector } from "@store/hooks";
-import { isAuthenticated as checkAuth } from "../services/auth.service";
+import { isAuthenticated as checkAuth } from "@services/auth.service";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;

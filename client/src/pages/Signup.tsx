@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAppDispatch } from "@store/hooks";
 import { login as loginAction } from "@store/slices/authSlice";
-import { signup, checkUsername } from "../services/auth.service";
+import { signup, checkUsername } from "@services/auth.service";
 import { FormValidator } from "@lib/validation";
 import type { SignupData } from "@types";
 import { Eye, EyeOff, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Input } from "@components/ui/Input";
+import { Button } from "@components/ui/Button";
 
 export const Signup = () => {
   const navigate = useNavigate();
@@ -105,12 +107,12 @@ export const Signup = () => {
     }
 
     const emailValidation = FormValidator.validateEmail(formData.email);
-    if (!emailValidation.isValid) {
+    if (!emailValidation.isValid && formData?.email?.trim() !== "") {
       newErrors.email = emailValidation.error!;
     }
 
     const phoneValidation = FormValidator.validatePhone(formData.phone);
-    if (!phoneValidation.isValid) {
+    if (!phoneValidation.isValid && formData?.phone?.trim() !== "") {
       newErrors.phone = phoneValidation.error!;
     }
 
@@ -179,16 +181,18 @@ export const Signup = () => {
 
   return (
     <div className="min-h-screen flex bg-slate-900">
-      <div className="flex-1 flex items-center justify-center px-4 py-8">
+      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="w-full max-w-md">
-          <div className="mb-6">
-            <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-4">
-              <span className="text-white font-bold text-xl">J</span>
+          <div className="mb-4 sm:mb-6">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-3 sm:mb-4">
+              <span className="text-white font-bold text-lg sm:text-xl">J</span>
             </div>
-            <h2 className="text-2xl font-semibold text-white mb-1">
+            <h2 className="text-xl sm:text-2xl font-semibold text-white mb-1">
               Create account
             </h2>
-            <p className="text-slate-400 text-sm">Get started with JusTalk</p>
+            <p className="text-slate-400 text-xs sm:text-sm">
+              Get started with JusTalk
+            </p>
           </div>
 
           {successMessage && (
@@ -205,137 +209,85 @@ export const Signup = () => {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm text-slate-300 mb-2">
-                Username
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  name="username"
-                  value={formData.username}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-2 bg-slate-800 border ${
-                    errors.username
-                      ? "border-red-500"
-                      : usernameAvailable === true
-                      ? "border-green-500"
-                      : "border-slate-700"
-                  } rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-600`}
-                  placeholder="Choose username"
-                />
-                {usernameChecking && (
-                  <Loader2
-                    size={18}
-                    className="absolute right-3 top-2.5 text-slate-400 animate-spin"
-                  />
-                )}
-                {!usernameChecking && usernameAvailable === true && (
-                  <CheckCircle
-                    size={18}
-                    className="absolute right-3 top-2.5 text-green-500"
-                  />
-                )}
-                {!usernameChecking && usernameAvailable === false && (
-                  <XCircle
-                    size={18}
-                    className="absolute right-3 top-2.5 text-red-500"
-                  />
-                )}
-              </div>
-              {errors.username && (
-                <p className="mt-1 text-sm text-red-500">{errors.username}</p>
-              )}
-            </div>
+          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+            <Input
+              label="Username"
+              type="text"
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
+              error={errors.username}
+              placeholder="Choose username"
+              className={
+                usernameAvailable === true
+                  ? "border-green-500"
+                  : usernameAvailable === false
+                  ? "border-red-500"
+                  : ""
+              }
+              iconButton={
+                usernameChecking ? (
+                  <Loader2 size={18} className="text-slate-400 animate-spin" />
+                ) : usernameAvailable === true ? (
+                  <CheckCircle size={18} className="text-green-500" />
+                ) : usernameAvailable === false ? (
+                  <XCircle size={18} className="text-red-500" />
+                ) : null
+              }
+            />
 
-            <div>
-              <label className="block text-sm text-slate-300 mb-2">
-                First Name
-              </label>
-              <input
-                type="text"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                className={`w-full px-4 py-2 bg-slate-800 border ${
-                  errors.firstName ? "border-red-500" : "border-slate-700"
-                } rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-600`}
-                placeholder="Enter first name"
-              />
-              {errors.firstName && (
-                <p className="mt-1 text-sm text-red-500">{errors.firstName}</p>
-              )}
-            </div>
+            <Input
+              label="First Name"
+              type="text"
+              name="firstName"
+              value={formData.firstName}
+              onChange={handleChange}
+              error={errors.firstName}
+              placeholder="Enter first name"
+            />
 
-            <div>
-              <label className="block text-sm text-slate-300 mb-2">
-                Birthdate
-              </label>
-              <input
-                type="date"
-                name="birthdate"
-                value={formData.birthdate}
-                onChange={handleChange}
-                max={FormValidator.getMaxBirthdate(13)}
-                className={`w-full px-4 py-2 bg-slate-800 border ${
-                  errors.birthdate ? "border-red-500" : "border-slate-700"
-                } rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-600`}
-              />
-              {errors.birthdate && (
-                <p className="mt-1 text-sm text-red-500">{errors.birthdate}</p>
-              )}
-            </div>
+            <Input
+              label="Birthdate"
+              type="date"
+              name="birthdate"
+              value={formData.birthdate}
+              onChange={handleChange}
+              error={errors.birthdate}
+              max={FormValidator.getMaxBirthdate(13)}
+            />
 
-            <div>
-              <label className="block text-sm text-slate-300 mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-2 bg-slate-800 border ${
-                    errors.password ? "border-red-500" : "border-slate-700"
-                  } rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-600`}
-                  placeholder="Min 8 chars, 1 uppercase, 1 number"
-                />
+            <Input
+              label="Password"
+              type={showPassword ? "text" : "password"}
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              error={errors.password}
+              placeholder="Min 8 chars, 1 uppercase, 1 number"
+              iconButton={
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-300"
+                  className="text-slate-400 hover:text-slate-300 py-3.5"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
-              </div>
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-500">{errors.password}</p>
-              )}
-            </div>
+              }
+            />
 
-            <div>
-              <label className="block text-sm text-slate-300 mb-2">
-                Confirm Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-2 bg-slate-800 border ${
-                    errors.confirmPassword
-                      ? "border-red-500"
-                      : "border-slate-700"
-                  } rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-600`}
-                  placeholder="Re-enter password"
-                />
+            <Input
+              label="Confirm Password"
+              type={showConfirmPassword ? "text" : "password"}
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              error={errors.confirmPassword}
+              placeholder="Re-enter password"
+              iconButton={
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-300"
+                  className="text-slate-400 hover:text-slate-300 py-3.5"
                 >
                   {showConfirmPassword ? (
                     <EyeOff size={18} />
@@ -343,71 +295,56 @@ export const Signup = () => {
                     <Eye size={18} />
                   )}
                 </button>
-              </div>
-              {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-500">
-                  {errors.confirmPassword}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm text-slate-400 mb-2">
-                Email <span className="text-xs">(optional)</span>
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className={`w-full px-4 py-2 bg-slate-800 border ${
-                  errors.email ? "border-red-500" : "border-slate-700"
-                } rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-600`}
-                placeholder="you@example.com"
-              />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-500">{errors.email}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm text-slate-400 mb-2">
-                Phone <span className="text-xs">(optional)</span>
-              </label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                className={`w-full px-4 py-2 bg-slate-800 border ${
-                  errors.phone ? "border-red-500" : "border-slate-700"
-                } rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-600`}
-                placeholder="+1234567890"
-              />
-              {errors.phone && (
-                <p className="mt-1 text-sm text-red-500">{errors.phone}</p>
-              )}
-            </div>
-
-            <button
-              type="submit"
-              disabled={
-                loading || usernameChecking || usernameAvailable === false
               }
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2"
+            />
+
+            <Input
+              label={
+                <>
+                  Email <span className="text-xs">(optional)</span>
+                </>
+              }
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              error={errors.email}
+              placeholder="you@example.com"
+              containerClassName="text-slate-400"
+            />
+
+            <Input
+              label={
+                <>
+                  Phone <span className="text-xs">(optional)</span>
+                </>
+              }
+              type="tel"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              error={errors.phone}
+              placeholder="+1234567890"
+              containerClassName="text-slate-400"
+            />
+
+            <Button
+              type="submit"
+              loading={loading}
+              disabled={usernameChecking || usernameAvailable === false}
+              fullWidth
             >
-              {loading && <Loader2 size={18} className="animate-spin" />}
               {loading ? "Creating..." : "Sign Up"}
-            </button>
+            </Button>
           </form>
 
-          <div className="mt-6 text-center">
-            <span className="text-slate-400 text-sm">
+          <div className="mt-3 text-center">
+            <span className="text-slate-400 text-xs sm:text-sm">
               Already have an account?{" "}
             </span>
             <Link
               to="/login"
-              className="text-blue-500 hover:text-blue-400 text-sm font-medium"
+              className="text-blue-500 hover:text-blue-400 text-xs sm:text-sm font-medium"
             >
               Login
             </Link>

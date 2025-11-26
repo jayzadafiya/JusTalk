@@ -1,9 +1,10 @@
 import { Video, MessageSquare, LogOut, Settings } from "lucide-react";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAppSelector, useAppDispatch } from "@store/hooks";
 import { logout as logoutAction } from "@store/slices/authSlice";
-import { logout as logoutApi } from "../services/auth.service";
+import { logout as logoutApi } from "@services/auth.service";
+import { Button } from "@components/ui/Button";
 
 interface SidebarProps {
   activeTab: "video" | "chat";
@@ -12,14 +13,35 @@ interface SidebarProps {
 
 export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
   const [showMenu, setShowMenu] = useState(false);
+
+  useEffect(() => {
+    if (location.pathname.includes("/calls")) {
+      onTabChange("chat");
+    } else if (
+      location.pathname.includes("/rooms") ||
+      location.pathname.includes("/dashboard")
+    ) {
+      onTabChange("video");
+    }
+  }, [location.pathname, onTabChange]);
 
   const handleLogout = () => {
     logoutApi();
     dispatch(logoutAction());
     navigate("/login");
+  };
+
+  const handleTabChange = (tab: "video" | "chat") => {
+    onTabChange(tab);
+    if (tab === "video") {
+      navigate("/dashboard/rooms");
+    } else {
+      navigate("/dashboard/calls");
+    }
   };
 
   return (
@@ -31,27 +53,29 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
       </div>
 
       <div className="flex-1 flex flex-col gap-4">
-        <button
-          onClick={() => onTabChange("video")}
-          className={`w-11 h-11 rounded-lg flex items-center justify-center ${
-            activeTab === "video"
-              ? "bg-blue-600 text-white"
-              : "text-slate-400 hover:text-white hover:bg-slate-800"
+        <Button
+          onClick={() => handleTabChange("video")}
+          variant={activeTab === "video" ? "primary" : "ghost"}
+          className={`w-10 h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 p-0 ${
+            activeTab === "video" ? "" : "text-slate-400 hover:text-white"
           }`}
         >
-          <Video size={20} />
-        </button>
+          <span className="flex items-center justify-center w-full h-full transform scale-100 md:scale-105 lg:scale-115">
+            <Video size={20} />
+          </span>
+        </Button>
 
-        <button
-          onClick={() => onTabChange("chat")}
-          className={`w-11 h-11 rounded-lg flex items-center justify-center ${
-            activeTab === "chat"
-              ? "bg-blue-600 text-white"
-              : "text-slate-400 hover:text-white hover:bg-slate-800"
+        <Button
+          onClick={() => handleTabChange("chat")}
+          variant={activeTab === "chat" ? "primary" : "ghost"}
+          className={`w-10 h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 p-0 ${
+            activeTab === "chat" ? "" : "text-slate-400 hover:text-white"
           }`}
         >
-          <MessageSquare size={20} />
-        </button>
+          <span className="flex items-center justify-center w-full h-full transform scale-100 md:scale-105 lg:scale-115">
+            <MessageSquare size={20} />
+          </span>
+        </Button>
       </div>
 
       <div className="relative">
@@ -84,17 +108,21 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
               </div>
 
               <div className="p-2">
-                <button className="w-full px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-700 rounded flex items-center gap-2">
-                  <Settings size={16} />
-                  Settings
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-slate-700 rounded flex items-center gap-2"
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start text-slate-300 px-3 py-2 text-sm"
+                  leftIcon={<Settings size={16} />}
                 >
-                  <LogOut size={16} />
+                  Settings
+                </Button>
+                <Button
+                  onClick={handleLogout}
+                  variant="ghost"
+                  className="w-full justify-start text-red-400 px-3 py-2 text-sm"
+                  leftIcon={<LogOut size={16} />}
+                >
                   Logout
-                </button>
+                </Button>
               </div>
             </div>
           </>
