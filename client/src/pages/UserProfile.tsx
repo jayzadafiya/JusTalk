@@ -54,8 +54,17 @@ export const UserProfile = () => {
       if (response.success && response.data) {
         dispatch(setUser(response.data));
         setIsEditing(false);
-      } else if (response.errors) {
-        setError(response.errors[0]?.message || "Failed to update profile");
+      } else {
+        if (response.errors && response.errors.length > 0) {
+          const errorMessages = response.errors
+            .map((err) => err.message)
+            .join(", ");
+          setError(errorMessages);
+        } else if (response.message) {
+          setError(response.message);
+        } else {
+          setError("Failed to update profile");
+        }
       }
     } catch (err) {
       setError("An unexpected error occurred. Please try again.");
@@ -128,7 +137,7 @@ export const UserProfile = () => {
                   className="gap-2 flex-1"
                   disabled={isLoading}
                 >
-                  {isLoading ? "Saving..." : "Save Changes"}
+                  {isLoading ? "Saving..." : "Save"}
                 </Button>
               </div>
             )}
