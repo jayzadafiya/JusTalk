@@ -85,3 +85,28 @@ export const checkUsernameValidation: ValidationChain[] = [
     .withMessage("Username can only contain letters, numbers and underscores")
     .toLowerCase(),
 ];
+
+export const updateProfileValidation: ValidationChain[] = [
+  body("firstName")
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage("First name cannot be empty")
+    .isLength({ min: 2, max: 50 })
+    .withMessage("First name must be between 2 and 50 characters")
+    .matches(/^[a-zA-Z\s]+$/)
+    .withMessage("First name can only contain letters and spaces"),
+
+  body("email")
+    .optional({ values: "null" })
+    .trim()
+    .isEmail()
+    .withMessage("Please provide a valid email address")
+    .normalizeEmail(),
+
+  body("phone")
+    .optional({ values: "null" })
+    .trim()
+    .matches(/^\+?[1-9]\d{1,14}$/)
+    .withMessage("Please provide a valid phone number in international format"),
+];
