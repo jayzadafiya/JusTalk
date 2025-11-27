@@ -18,7 +18,11 @@ export const initializeSocketServer = (io: SocketIOServer) => {
 
     socket.on(
       "join-room",
-      bindAndWrap(socket, handleJoinRoom, { errorEvent: "server:error" })
+      bindAndWrap(
+        socket,
+        (socket: Socket, data: any) => handleJoinRoom(socket, data, io),
+        { errorEvent: "server:error" }
+      )
     );
 
     socket.on("offer", bindAndWrap(socket, handleOffer));
@@ -29,7 +33,12 @@ export const initializeSocketServer = (io: SocketIOServer) => {
 
     socket.on("media-state", bindAndWrap(socket, handleMediaState));
 
-    socket.on("leave-room", bindAndWrap(socket, handleDisconnect));
+    socket.on(
+      "leave-room",
+      bindAndWrap(socket, (socket: Socket, data: { roomCode: string }) =>
+        handleDisconnect(socket, data.roomCode, io)
+      )
+    );
 
     registerDoodleHandlers(socket, io);
 
@@ -39,11 +48,8 @@ export const initializeSocketServer = (io: SocketIOServer) => {
       const roomCode = getRoomBySocketId(socket.id);
       if (roomCode) {
         try {
-          await handleDisconnect(socket, roomCode);
-        } catch (err) {
-          console.error("Error during disconnect handler:", err);
-        }
-        try {
+          await handleDisconnect(socket, roomCode, io);
+
           handleDoodleDisconnect(socket.id);
         } catch (err) {
           console.error("Error during doodle disconnect cleanup:", err);

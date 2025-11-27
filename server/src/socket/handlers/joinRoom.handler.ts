@@ -9,7 +9,11 @@ import Room from "@room/room.model";
 import * as doodleService from "@doodle/doodle.service.js";
 import { getBufferedStrokes } from "@socket/handlers";
 
-export const handleJoinRoom = async (socket: Socket, data: JoinRoomData) => {
+export const handleJoinRoom = async (
+  socket: Socket,
+  data: JoinRoomData,
+  io: any
+) => {
   const { roomCode, userId, username } = data;
 
   socket.join(roomCode);
@@ -31,7 +35,7 @@ export const handleJoinRoom = async (socket: Socket, data: JoinRoomData) => {
 
   await Room.findOneAndUpdate(
     { code: roomCode },
-    { $addToSet: { connectedUsers: userId } }
+    { $addToSet: { connectedUsers: userId }, isActive: true }
   );
 
   const updatedRoom = await Room.findOne({ code: roomCode })
@@ -40,9 +44,12 @@ export const handleJoinRoom = async (socket: Socket, data: JoinRoomData) => {
     .populate("connectedUsers", "username firstName lastName avatar");
 
   if (updatedRoom) {
-    socket.server.emit("room-updated", {
+    io.emit("room-updated", {
       room: updatedRoom,
     });
+    console.log(
+      `Emitted room-updated for ${roomCode} - connectedUsers: ${updatedRoom.connectedUsers.length}, isActive: ${updatedRoom.isActive}`
+    );
   }
 
   try {
