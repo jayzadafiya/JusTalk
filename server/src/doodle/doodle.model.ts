@@ -138,6 +138,14 @@ DoodleStrokeSchema.statics.bulkUpsert = async function (strokes: any[]) {
   return this.bulkWrite(operations);
 };
 
+DoodleStrokeSchema.methods.toJSON = function () {
+  const obj = this.toObject();
+  delete obj.__v;
+  delete obj.createdAt;
+  delete obj.updatedAt;
+  return obj;
+};
+
 const DoodleStroke = mongoose.model<IDoodleStroke>(
   "DoodleStroke",
   DoodleStrokeSchema

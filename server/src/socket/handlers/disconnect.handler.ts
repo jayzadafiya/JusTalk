@@ -35,9 +35,9 @@ export const handleDisconnect = async (
   });
 
   const updatedRoom = await Room.findOne({ code: roomCode })
-    .populate("createdBy", "username firstName lastName avatar")
-    .populate("participants", "username firstName lastName avatar")
-    .populate("connectedUsers", "username firstName lastName avatar");
+    .populate("createdBy", "_id username firstName")
+    .populate("participants", "_id username firstName")
+    .populate("connectedUsers", "_id username firstName");
 
   if (updatedRoom) {
     io.emit("room-updated", {
@@ -57,9 +57,9 @@ export const handleDisconnect = async (
     console.log(`Room ${roomCode} marked as inactive`);
 
     const endedRoom = await Room.findOne({ code: roomCode })
-      .populate("createdBy", "username firstName lastName avatar")
-      .populate("participants", "username firstName lastName avatar")
-      .populate("connectedUsers", "username firstName lastName avatar");
+      .populate("createdBy", "_id username firstName")
+      .populate("participants", "_id username firstName")
+      .populate("connectedUsers", "_id username firstName");
 
     if (endedRoom) {
       io.emit("room-updated", {

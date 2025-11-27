@@ -84,8 +84,8 @@ export class RoomService {
     await room.save();
 
     const roomData = await Room.findById(room._id)
-      .populate("participants", "username firstName avatar")
-      .populate("connectedUsers", "username firstName avatar");
+      .populate("participants", "_id username firstName")
+      .populate("connectedUsers", "_id username firstName");
     return roomData;
   }
 
@@ -110,9 +110,9 @@ export class RoomService {
 
   async getRoomByCode(code: string) {
     const room = await Room.findOne({ code: code.toUpperCase() })
-      .populate("createdBy", "username firstName avatar")
-      .populate("participants", "username firstName avatar")
-      .populate("connectedUsers", "username firstName avatar");
+      .populate("createdBy", "_id username firstName")
+      .populate("participants", "_id username firstName")
+      .populate("connectedUsers", "_id username firstName");
 
     if (!room) {
       throw new NotFoundError("Room not found");
@@ -127,9 +127,9 @@ export class RoomService {
     const rooms = await Room.find({
       participants: userId,
     })
-      .populate("createdBy", "username firstName lastName avatar")
-      .populate("participants", "username firstName lastName avatar")
-      .populate("connectedUsers", "username firstName lastName avatar")
+      .populate("createdBy", "_id username firstName")
+      .populate("participants", "_id username firstName")
+      .populate("connectedUsers", "_id username firstName")
       .sort({ updatedAt: -1 })
       .limit(50);
 
