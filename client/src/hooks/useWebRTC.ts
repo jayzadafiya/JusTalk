@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback } from "react";
-import { socketService } from "../services/socket.service";
+import { socketService } from "@services/socket.service";
 
 const STUN_SERVERS = {
   iceServers: [

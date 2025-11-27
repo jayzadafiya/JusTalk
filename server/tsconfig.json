@@ -28,6 +28,7 @@
       "@common/*": ["src/common/*"],
       "@user/*": ["src/user/*"],
       "@socket/*": ["src/socket/*"],
+      "@doodle/*": ["src/doodle/*"],
       "@room/*": ["src/room/*"]
     }
   },

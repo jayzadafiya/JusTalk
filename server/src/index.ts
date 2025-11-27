@@ -9,6 +9,7 @@ import morgan from "morgan";
 import { connectDatabase } from "@config/database.js";
 import userRoutes from "./user/user.route.js";
 import roomRoutes from "./room/room.route.js";
+import doodleRoutes from "@doodle/doodle.route.js";
 import { errorHandler } from "./middleware/error.middleware.js";
 import { initializeSocketServer } from "./socket/socketServer.js";
 
@@ -39,6 +40,7 @@ connectDatabase();
 // API Routes
 app.use("/api/user", userRoutes);
 app.use("/api/room", roomRoutes);
+app.use("/api/doodle", doodleRoutes);
 
 app.get("/api/health", (_req: Request, res: Response) => {
   res.json({
