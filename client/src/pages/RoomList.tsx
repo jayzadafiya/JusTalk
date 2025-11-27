@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Video, Users, Plus, Hash } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Video, Users, Plus, Hash, Loader2 } from "lucide-react";
 import CreateRoom from "@components/forms/CreateRoom";
 import JoinRoom from "@components/forms/JoinRoom";
 import { Button } from "@components/ui/Button";
@@ -14,11 +14,43 @@ export const RoomList = () => {
   const [showJoinRoom, setShowJoinRoom] = useState(false);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loadingRooms, setLoadingRooms] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
+  const observerTarget = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     loadActiveRooms();
   }, []);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (
+          entries[0].isIntersecting &&
+          hasMore &&
+          !loadingMore &&
+          !loadingRooms
+        ) {
+          loadMoreRooms();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [hasMore, loadingMore, loadingRooms]);
 
   useEffect(() => {
     const socket = socketService.connect();
@@ -63,14 +95,38 @@ export const RoomList = () => {
   const loadActiveRooms = async () => {
     try {
       setLoadingRooms(true);
-      const response = await getUserRooms();
+      setPage(1);
+      const response = await getUserRooms(1, 10);
       if (response.success && response?.data?.rooms) {
         setRooms(response.data.rooms || []);
+        setHasMore(response.data.pagination.hasMore);
+        setTotalCount(response.data.pagination.totalCount);
+        setPage(1);
       }
     } catch (error) {
       console.error("Error loading rooms:", error);
     } finally {
       setLoadingRooms(false);
+    }
+  };
+
+  const loadMoreRooms = async () => {
+    if (loadingMore || !hasMore) return;
+
+    try {
+      setLoadingMore(true);
+      const nextPage = page + 1;
+      const response = await getUserRooms(nextPage, 10);
+      if (response.success && response?.data?.rooms) {
+        setRooms((prevRooms) => [...prevRooms, ...response.data.rooms]);
+        setHasMore(response.data.pagination.hasMore);
+        setTotalCount(response.data.pagination.totalCount);
+        setPage(nextPage);
+      }
+    } catch (error) {
+      console.error("Error loading more rooms:", error);
+    } finally {
+      setLoadingMore(false);
     }
   };
 
@@ -80,10 +136,10 @@ export const RoomList = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 items-center mb-6 gap-3">
           <div className=" flex flex-row items-center justify-between md:items-start md:flex-col ">
             <h2 className="text-2xl font-bold text-white mb-1">My Rooms</h2>
-            {rooms.length > 0 && (
+            {totalCount > 0 && (
               <p className="text-slate-400 text-sm">
-                {rooms.length} room
-                {rooms.length !== 1 ? "s" : ""} total
+                Showing {rooms.length} of {totalCount} room
+                {totalCount !== 1 ? "s" : ""}
               </p>
             )}
           </div>
@@ -117,184 +173,211 @@ export const RoomList = () => {
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
           </div>
         ) : rooms.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {rooms.map((room) => {
-              const allParticipants: User[] = (room?.participants ??
-                []) as User[];
-              const connectedUsers: User[] = (room?.connectedUsers ??
-                []) as User[];
-              const connectedUserIds = connectedUsers.map((u) => u._id);
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {rooms.map((room) => {
+                const allParticipants: User[] = (room?.participants ??
+                  []) as User[];
+                const connectedUsers: User[] = (room?.connectedUsers ??
+                  []) as User[];
+                const connectedUserIds = connectedUsers.map((u) => u._id);
 
-              const createdBy: User = room?.createdBy as User;
+                const createdBy: User = room?.createdBy as User;
 
-              return (
-                <div
-                  key={room._id}
-                  className={`bg-gradient-to-br from-slate-800 to-slate-800/50 rounded-xl p-5 border transition-all cursor-pointer group ${
-                    room.isActive
-                      ? "border-slate-700 hover:border-blue-500 hover:shadow-lg hover:shadow-blue-500/10"
-                      : "border-slate-700/50 opacity-75 hover:border-slate-600"
-                  }`}
-                  onClick={() =>
-                    room.isActive && navigate(`/room/${room.code}`)
-                  }
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <h3 className="text-white font-semibold text-lg mb-1 truncate group-hover:text-blue-400 transition-colors">
-                        {room.name}
-                      </h3>
-                      <div className="flex items-center gap-2">
-                        <p className="text-slate-400 text-xs font-mono bg-slate-900/80 px-2.5 py-1 rounded border border-slate-700/50">
-                          {room.code}
-                        </p>
-                        {room.hasPassword && (
-                          <div className="bg-yellow-600/20 text-yellow-500 px-2 py-1 rounded text-xs font-medium border border-yellow-600/30">
-                            🔒
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {createdBy && (
-                    <div className="mb-3 pb-3 border-b border-slate-700/50">
-                      <p className="text-xs text-slate-500 mb-1.5 font-medium">
-                        Host
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-semibold shadow-lg">
-                          {(
-                            createdBy?.firstName?.[0] ||
-                            createdBy?.username?.[0] ||
-                            "?"
-                          )?.toUpperCase()}
-                        </div>
-                        <div>
-                          <span className="text-sm text-slate-200 font-medium">
-                            {createdBy?.firstName || createdBy?.username}
-                          </span>
-                          {createdBy.username && createdBy.firstName && (
-                            <span className="text-xs text-slate-500 ml-1">
-                              @{createdBy.username}
-                            </span>
+                return (
+                  <div
+                    key={room._id}
+                    className={`bg-gradient-to-br from-slate-800 to-slate-800/50 rounded-xl p-5 border transition-all cursor-pointer group ${
+                      room.isActive
+                        ? "border-slate-700 hover:border-blue-500 hover:shadow-lg hover:shadow-blue-500/10"
+                        : "border-slate-700/50 opacity-75 hover:border-slate-600"
+                    }`}
+                    onClick={() =>
+                      room.isActive && navigate(`/room/${room.code}`)
+                    }
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <h3 className="text-white font-semibold text-lg mb-1 truncate group-hover:text-blue-400 transition-colors">
+                          {room.name}
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          <p className="text-slate-400 text-xs font-mono bg-slate-900/80 px-2.5 py-1 rounded border border-slate-700/50">
+                            {room.code}
+                          </p>
+                          {room.hasPassword && (
+                            <div className="bg-yellow-600/20 text-yellow-500 px-2 py-1 rounded text-xs font-medium border border-yellow-600/30">
+                              🔒
+                            </div>
                           )}
                         </div>
                       </div>
                     </div>
-                  )}
 
-                  <div className="mb-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs text-slate-500 font-medium">
-                        {room.isActive ? "In Call" : "Participants"}
-                      </p>
-                      <div className="flex items-center gap-1.5 text-xs">
-                        <Users size={13} className="text-slate-400" />
-                        <span
-                          className={`font-semibold ${
-                            connectedUsers.length >= room.maxParticipants
-                              ? "text-red-400"
-                              : connectedUsers.length >
-                                room.maxParticipants * 0.7
-                              ? "text-yellow-400"
-                              : room.isActive
-                              ? "text-green-400"
-                              : "text-slate-400"
-                          }`}
-                        >
-                          {room.isActive
-                            ? connectedUsers.length
-                            : allParticipants.length}
-                          /{room.maxParticipants}
-                        </span>
-                      </div>
-                    </div>
-
-                    {allParticipants.length > 0 ? (
-                      <div className="space-y-1.5">
-                        {allParticipants.slice(0, 5).map((participant, idx) => {
-                          const isInCall = connectedUserIds.includes(
-                            participant._id
-                          );
-                          return (
-                            <div
-                              key={idx}
-                              className="flex items-center gap-2 bg-slate-900/50 px-2.5 py-1.5 rounded-lg hover:bg-slate-900 transition-colors"
-                              title={`${
-                                participant.firstName || participant.username
-                              } (@${participant.username}) - ${
-                                isInCall ? "In call" : "Left"
-                              }`}
-                            >
-                              <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white text-[10px] font-semibold shadow-md">
-                                {(
-                                  participant.firstName?.[0] ||
-                                  participant.username?.[0] ||
-                                  "?"
-                                ).toUpperCase()}
-                              </div>
-                              <span className="text-xs text-slate-300 truncate flex-1">
-                                {participant.firstName || participant.username}
-                              </span>
-                              <div
-                                className={`w-1.5 h-1.5 rounded-full ${
-                                  isInCall ? "bg-green-400" : "bg-red-400"
-                                }`}
-                              ></div>
-                            </div>
-                          );
-                        })}
-                        {allParticipants.length > 5 && (
-                          <div className="flex items-center justify-center bg-slate-900/30 px-2.5 py-1.5 rounded-lg">
-                            <span className="text-xs text-slate-400 font-medium">
-                              +{allParticipants.length - 5} more participant
-                              {allParticipants.length - 5 !== 1 ? "s" : ""}
-                            </span>
+                    {createdBy && (
+                      <div className="mb-3 pb-3 border-b border-slate-700/50">
+                        <p className="text-xs text-slate-500 mb-1.5 font-medium">
+                          Host
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-semibold shadow-lg">
+                            {(
+                              createdBy?.firstName?.[0] ||
+                              createdBy?.username?.[0] ||
+                              "?"
+                            )?.toUpperCase()}
                           </div>
-                        )}
+                          <div>
+                            <span className="text-sm text-slate-200 font-medium">
+                              {createdBy?.firstName || createdBy?.username}
+                            </span>
+                            {createdBy.username && createdBy.firstName && (
+                              <span className="text-xs text-slate-500 ml-1">
+                                @{createdBy.username}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    ) : (
-                      <p className="text-xs text-slate-500 italic py-2 text-center">
-                        No participants yet
-                      </p>
                     )}
-                  </div>
 
-                  <div className="flex items-center justify-between pt-3 border-t border-slate-700/50">
-                    <div className="flex items-center gap-1.5">
-                      {room.isActive ? (
-                        <>
-                          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                          <span className="text-xs text-green-500 font-semibold">
-                            Live
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs text-slate-500 font-medium">
+                          {room.isActive ? "In Call" : "Participants"}
+                        </p>
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <Users size={13} className="text-slate-400" />
+                          <span
+                            className={`font-semibold ${
+                              connectedUsers.length >= room.maxParticipants
+                                ? "text-red-400"
+                                : connectedUsers.length >
+                                  room.maxParticipants * 0.7
+                                ? "text-yellow-400"
+                                : room.isActive
+                                ? "text-green-400"
+                                : "text-slate-400"
+                            }`}
+                          >
+                            {room.isActive
+                              ? connectedUsers.length
+                              : allParticipants.length}
+                            /{room.maxParticipants}
                           </span>
-                        </>
+                        </div>
+                      </div>
+
+                      {allParticipants.length > 0 ? (
+                        <div className="space-y-1.5">
+                          {allParticipants
+                            .slice(0, 5)
+                            .map((participant, idx) => {
+                              const isInCall = connectedUserIds.includes(
+                                participant._id
+                              );
+                              return (
+                                <div
+                                  key={idx}
+                                  className="flex items-center gap-2 bg-slate-900/50 px-2.5 py-1.5 rounded-lg hover:bg-slate-900 transition-colors"
+                                  title={`${
+                                    participant.firstName ||
+                                    participant.username
+                                  } (@${participant.username}) - ${
+                                    isInCall ? "In call" : "Left"
+                                  }`}
+                                >
+                                  <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white text-[10px] font-semibold shadow-md">
+                                    {(
+                                      participant.firstName?.[0] ||
+                                      participant.username?.[0] ||
+                                      "?"
+                                    ).toUpperCase()}
+                                  </div>
+                                  <span className="text-xs text-slate-300 truncate flex-1">
+                                    {participant.firstName ||
+                                      participant.username}
+                                  </span>
+                                  <div
+                                    className={`w-1.5 h-1.5 rounded-full ${
+                                      isInCall ? "bg-green-400" : "bg-red-400"
+                                    }`}
+                                  ></div>
+                                </div>
+                              );
+                            })}
+                          {allParticipants.length > 5 && (
+                            <div className="flex items-center justify-center bg-slate-900/30 px-2.5 py-1.5 rounded-lg">
+                              <span className="text-xs text-slate-400 font-medium">
+                                +{allParticipants.length - 5} more participant
+                                {allParticipants.length - 5 !== 1 ? "s" : ""}
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       ) : (
-                        <>
-                          <div className="w-2 h-2 bg-slate-500 rounded-full"></div>
-                          <span className="text-xs text-slate-500 font-semibold">
-                            Ended
-                          </span>
-                        </>
+                        <p className="text-xs text-slate-500 italic py-2 text-center">
+                          No participants yet
+                        </p>
                       )}
                     </div>
-                    {room.isActive && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/room/${room.code}`);
-                        }}
-                        className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs rounded-lg font-medium transition-all hover:shadow-lg hover:shadow-blue-500/30"
-                      >
-                        Join Call →
-                      </button>
-                    )}
+
+                    <div className="flex items-center justify-between pt-3 border-t border-slate-700/50">
+                      <div className="flex items-center gap-1.5">
+                        {room.isActive ? (
+                          <>
+                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                            <span className="text-xs text-green-500 font-semibold">
+                              Live
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <div className="w-2 h-2 bg-slate-500 rounded-full"></div>
+                            <span className="text-xs text-slate-500 font-semibold">
+                              Ended
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      {room.isActive && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/room/${room.code}`);
+                          }}
+                          className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs rounded-lg font-medium transition-all hover:shadow-lg hover:shadow-blue-500/30"
+                        >
+                          Join Call →
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+
+            {/* Infinite scroll loader */}
+            {loadingMore && (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 size={32} className="animate-spin text-blue-500" />
+              </div>
+            )}
+
+            {/* Intersection observer target */}
+            {hasMore && !loadingMore && (
+              <div ref={observerTarget} className="h-10" />
+            )}
+
+            {/* End of list message */}
+            {!hasMore && (
+              <div className="text-center py-6">
+                <p className="text-slate-500 text-sm">
+                  You've reached the end of your rooms
+                </p>
+              </div>
+            )}
+          </>
         ) : (
           <div className="text-center py-12">
             <div className="w-20 h-20 bg-slate-800 rounded-lg flex items-center justify-center mx-auto mb-5">

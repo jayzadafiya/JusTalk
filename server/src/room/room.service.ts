@@ -121,20 +121,36 @@ export class RoomService {
     return room;
   }
 
-  async getUserRooms(userId: string) {
-    console.log("getUserRooms - userId:", userId);
+  async getUserRooms(userId: string, page: number = 1, limit: number = 10) {
+    console.log("getUserRooms - userId:", userId, "page:", page, "limit:", limit);
 
-    const rooms = await Room.find({
-      participants: userId,
-    })
-      .populate("createdBy", "_id username firstName")
-      .populate("participants", "_id username firstName")
-      .populate("connectedUsers", "_id username firstName")
-      .sort({ updatedAt: -1 })
-      .limit(50);
+    const skip = (page - 1) * limit;
 
-    console.log("getUserRooms - found rooms:", rooms.length);
-    return rooms;
+    const [rooms, totalCount] = await Promise.all([
+      Room.find({
+        participants: userId,
+      })
+        .populate("createdBy", "_id username firstName")
+        .populate("participants", "_id username firstName")
+        .populate("connectedUsers", "_id username firstName")
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Room.countDocuments({ participants: userId }),
+    ]);
+
+    console.log("getUserRooms - found rooms:", rooms.length, "total:", totalCount);
+    
+    return {
+      rooms,
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+        hasMore: page * limit < totalCount,
+      },
+    };
   }
 }
 

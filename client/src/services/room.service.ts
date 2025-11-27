@@ -52,12 +52,23 @@ export const getRoomByCode = async (code: string): Promise<RoomResponse> => {
   }
 };
 
-export const getUserRooms = async (): Promise<{
+export const getUserRooms = async (page: number = 1, limit: number = 10): Promise<{
   success: boolean;
-  data: { rooms: Room[] };
+  data: {
+    rooms: Room[];
+    pagination: {
+      page: number;
+      limit: number;
+      totalCount: number;
+      totalPages: number;
+      hasMore: boolean;
+    };
+  };
 }> => {
   try {
-    const response = await api.get("/room");
+    const response = await api.get("/room", {
+      params: { page, limit },
+    });
     return response.data;
   } catch (error) {
     if (error instanceof AxiosError && error.response) {
