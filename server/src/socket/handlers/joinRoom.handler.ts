@@ -6,8 +6,14 @@ import {
   getOtherParticipants,
 } from "@socket/roomState";
 import Room from "@room/room.model";
+import * as doodleService from "@doodle/doodle.service.js";
+import { getBufferedStrokes } from "@socket/handlers";
 
-export const handleJoinRoom = async (socket: Socket, data: JoinRoomData) => {
+export const handleJoinRoom = async (
+  socket: Socket,
+  data: JoinRoomData,
+  io: any
+) => {
   const { roomCode, userId, username } = data;
 
   socket.join(roomCode);
@@ -29,7 +35,7 @@ export const handleJoinRoom = async (socket: Socket, data: JoinRoomData) => {
 
   await Room.findOneAndUpdate(
     { code: roomCode },
-    { $addToSet: { connectedUsers: userId } }
+    { $addToSet: { connectedUsers: userId }, isActive: true }
   );
 
   const updatedRoom = await Room.findOne({ code: roomCode })
@@ -38,8 +44,32 @@ export const handleJoinRoom = async (socket: Socket, data: JoinRoomData) => {
     .populate("connectedUsers", "username firstName lastName avatar");
 
   if (updatedRoom) {
-    socket.server.emit("room-updated", {
+    io.emit("room-updated", {
       room: updatedRoom,
     });
+    console.log(
+      `Emitted room-updated for ${roomCode} - connectedUsers: ${updatedRoom.connectedUsers.length}, isActive: ${updatedRoom.isActive}`
+    );
+  }
+
+  try {
+    const strokes = await doodleService.getStrokesByRoom(roomCode, 200);
+    const buffered = getBufferedStrokes(roomCode) || [];
+    const allStrokes = [...strokes, ...buffered].sort(
+      (a, b) => (a.startTime || 0) - (b.startTime || 0)
+    );
+
+    socket.emit("doodle:sync:response", {
+      roomId: roomCode,
+      strokes: allStrokes,
+    });
+    console.log(
+      `Sent ${strokes.length} existing strokes to new participant in room ${roomCode}`
+    );
+  } catch (error) {
+    console.error(
+      "Failed to send existing doodle strokes to new participant:",
+      error
+    );
   }
 };

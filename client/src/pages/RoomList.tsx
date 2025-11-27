@@ -52,12 +52,12 @@ export const RoomList = () => {
       setRooms((prevRooms) => prevRooms.filter((room) => room._id !== roomId));
     };
 
-    socket.on("room:updated", handleRoomUpdated);
-    socket.on("room:deleted", handleRoomDeleted);
+    socket.on("room-updated", handleRoomUpdated);
+    socket.on("room-deleted", handleRoomDeleted);
 
     return () => {
-      socket.off("room:updated", handleRoomUpdated);
-      socket.off("room:deleted", handleRoomDeleted);
+      socket.off("room-updated", handleRoomUpdated);
+      socket.off("room-deleted", handleRoomDeleted);
     };
   }, []);
 

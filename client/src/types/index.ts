@@ -1,5 +1,7 @@
 import { LucideIcon } from "lucide-react";
 
+export * from "./doodle.types";
+
 //Input component props
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
