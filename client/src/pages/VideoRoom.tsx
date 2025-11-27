@@ -15,6 +15,7 @@ import {
   PhoneOff,
   AlertCircle,
   Pen,
+  Camera,
 } from "lucide-react";
 import type { Participant, DoodleCanvasRef } from "@/types";
 import { useWebRTC } from "@/hooks/useWebRTC";
@@ -37,6 +38,7 @@ export const VideoRoom = () => {
   const [strokeColor, setStrokeColor] = useState("#000000");
   const [strokeWidth, setStrokeWidth] = useState(3);
   const [canUndo, setCanUndo] = useState(false);
+  const [isCapturingScreenshot, setIsCapturingScreenshot] = useState(false);
 
   const isMobile = useIsMobile();
 
@@ -269,6 +271,96 @@ export const VideoRoom = () => {
 
   const handleClearCanvas = () => {
     doodleCanvasRef.current?.clear(false);
+  };
+
+  const handleScreenshot = async () => {
+    try {
+      setIsCapturingScreenshot(true);
+
+      const videoContainer = document.querySelector(".flex-1.p-4");
+      if (!videoContainer) {
+        throw new Error("Video container not found");
+      }
+
+      const flashDiv = document.createElement("div");
+      flashDiv.style.position = "fixed";
+      flashDiv.style.top = "0";
+      flashDiv.style.left = "0";
+      flashDiv.style.width = "100%";
+      flashDiv.style.height = "100%";
+      flashDiv.style.backgroundColor = "white";
+      flashDiv.style.opacity = "0.7";
+      flashDiv.style.zIndex = "9999";
+      flashDiv.style.pointerEvents = "none";
+      document.body.appendChild(flashDiv);
+
+      setTimeout(() => {
+        document.body.removeChild(flashDiv);
+      }, 150);
+
+      const videoElements = videoContainer.querySelectorAll("video");
+      const containerRect = videoContainer.getBoundingClientRect();
+
+      const screenshotCanvas = document.createElement("canvas");
+      screenshotCanvas.width = containerRect.width;
+      screenshotCanvas.height = containerRect.height;
+      const ctx = screenshotCanvas.getContext("2d");
+
+      if (!ctx) {
+        throw new Error("Could not get canvas context");
+      }
+
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(0, 0, screenshotCanvas.width, screenshotCanvas.height);
+
+      videoElements.forEach((video) => {
+        const videoRect = video.getBoundingClientRect();
+        const x = videoRect.left - containerRect.left;
+        const y = videoRect.top - containerRect.top;
+
+        try {
+          ctx.drawImage(video, x, y, videoRect.width, videoRect.height);
+        } catch (err) {
+          console.warn("Could not draw video element:", err);
+        }
+      });
+
+      const doodleCanvas = videoContainer.querySelector("canvas");
+      if (doodleCanvas) {
+        const doodleRect = doodleCanvas.getBoundingClientRect();
+        const x = doodleRect.left - containerRect.left;
+        const y = doodleRect.top - containerRect.top;
+
+        try {
+          ctx.drawImage(
+            doodleCanvas,
+            x,
+            y,
+            doodleRect.width,
+            doodleRect.height
+          );
+        } catch (err) {
+          console.warn("Could not draw doodle canvas:", err);
+        }
+      }
+
+      screenshotCanvas.toBlob((blob: Blob | null) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+          link.download = `JusTalk-Screenshot-${timestamp}.png`;
+          link.href = url;
+          link.click();
+          URL.revokeObjectURL(url);
+        }
+        setIsCapturingScreenshot(false);
+      }, "image/png");
+    } catch (error) {
+      console.error("Screenshot capture failed:", error);
+      setIsCapturingScreenshot(false);
+      alert("Failed to capture screenshot. Please try again.");
+    }
   };
 
   if (error) {
@@ -516,6 +608,20 @@ export const VideoRoom = () => {
           title={isDrawingMode ? "Disable Drawing" : "Enable Drawing"}
         >
           <Pen size={22} />
+        </Button>
+
+        <Button
+          onClick={handleScreenshot}
+          variant="secondary"
+          className="w-14 h-14 p-0 rounded-full"
+          title="Take Screenshot"
+          disabled={isCapturingScreenshot}
+        >
+          {isCapturingScreenshot ? (
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+          ) : (
+            <Camera size={22} />
+          )}
         </Button>
 
         <Button
