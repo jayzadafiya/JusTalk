@@ -7,11 +7,31 @@ interface AuthState {
   isAuthenticated: boolean;
 }
 
-const initialState: AuthState = {
-  user: null,
-  token: null,
-  isAuthenticated: false,
+const loadInitialState = (): AuthState => {
+  try {
+    const token = localStorage.getItem("token");
+    const userStr = localStorage.getItem("user");
+
+    if (token && userStr) {
+      const user = JSON.parse(userStr);
+      return {
+        user,
+        token,
+        isAuthenticated: true,
+      };
+    }
+  } catch (error) {
+    console.error("Failed to load auth state from localStorage:", error);
+  }
+
+  return {
+    user: null,
+    token: null,
+    isAuthenticated: false,
+  };
 };
+
+const initialState: AuthState = loadInitialState();
 
 const authSlice = createSlice({
   name: "auth",
