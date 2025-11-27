@@ -15,7 +15,6 @@ export const getStrokes = asyncHandler(async (req: Request, res: Response) => {
     success: true,
     data: {
       strokes,
-      total: strokes.length,
     },
   });
 });

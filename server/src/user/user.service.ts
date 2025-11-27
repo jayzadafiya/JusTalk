@@ -50,7 +50,7 @@ export class UserService {
   async authenticateUser(username: string, password: string) {
     const user = await User.findOne({
       username: { $regex: new RegExp(`^${username}$`, "i") },
-    });
+    }).select("+password");
 
     if (!user) {
       throw new UnauthorizedError("Invalid username or password");

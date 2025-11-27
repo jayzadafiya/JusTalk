@@ -26,7 +26,6 @@ export interface User {
   isActive: boolean;
   lastLogin?: Date;
   createdAt: Date;
-  updatedAt: Date;
 }
 
 // Auth related types
@@ -107,8 +106,6 @@ export interface Room {
   maxParticipants: number;
   hasPassword?: boolean;
   isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 export interface CreateRoomData {

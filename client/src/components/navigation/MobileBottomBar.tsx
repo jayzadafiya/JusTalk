@@ -47,7 +47,7 @@ export const MobileBottomBar = ({
             <span className="text-xs">Video</span>
           </Button>
 
-          <Button
+          {/* <Button
             onClick={() => handleTabChange("chat")}
             variant={activeTab === "chat" ? "primary" : "ghost"}
             className={`flex-1 flex flex-col items-center gap-1 py-3 px-2 ${
@@ -58,7 +58,7 @@ export const MobileBottomBar = ({
           >
             <MessageSquare size={20} />
             <span className="text-xs">Chat</span>
-          </Button>
+          </Button> */}
 
           <Button
             onClick={onMenuClick}

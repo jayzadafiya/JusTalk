@@ -39,9 +39,9 @@ export const handleJoinRoom = async (
   );
 
   const updatedRoom = await Room.findOne({ code: roomCode })
-    .populate("createdBy", "username firstName lastName avatar")
-    .populate("participants", "username firstName lastName avatar")
-    .populate("connectedUsers", "username firstName lastName avatar");
+    .populate("createdBy", "_id username firstName")
+    .populate("participants", "_id username firstName")
+    .populate("connectedUsers", "_id username firstName");
 
   if (updatedRoom) {
     io.emit("room-updated", {
