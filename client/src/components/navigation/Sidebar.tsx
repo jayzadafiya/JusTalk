@@ -109,6 +109,10 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
 
               <div className="p-2">
                 <Button
+                  onClick={() => {
+                    setShowMenu(false);
+                    navigate("/dashboard/profile");
+                  }}
                   variant="ghost"
                   className="w-full justify-start text-slate-300 px-3 py-2 text-sm"
                   leftIcon={<Settings size={16} />}

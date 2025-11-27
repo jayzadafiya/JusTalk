@@ -76,3 +76,22 @@ export const getProfile = asyncHandler(
     });
   }
 );
+
+export const updateProfile = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
+    const userId = (req as any).userId;
+    const { firstName, email, phone } = req.body;
+
+    const user = await userService.updateProfile(userId, {
+      firstName,
+      email,
+      phone,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      data: user.toJSON(),
+    });
+  }
+);

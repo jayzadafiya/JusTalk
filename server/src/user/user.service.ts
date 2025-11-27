@@ -79,6 +79,47 @@ export class UserService {
     return await User.findById(userId);
   }
 
+  async updateProfile(
+    userId: string,
+    updateData: {
+      firstName?: string;
+      email?: string;
+      phone?: string;
+    }
+  ) {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new UnauthorizedError("User not found");
+    }
+
+    if (updateData.email && updateData.email !== user.email) {
+      const existingEmail = await User.findOne({
+        email: updateData?.email?.trim()?.toLowerCase(),
+        _id: { $ne: userId },
+      });
+      if (existingEmail) {
+        throw new ConflictError("Email already registered", "email");
+      }
+    }
+
+    if (updateData.phone && updateData.phone !== user.phone) {
+      const existingPhone = await User.findOne({
+        phone: updateData.phone,
+        _id: { $ne: userId },
+      });
+      if (existingPhone) {
+        throw new ConflictError("Phone number already registered", "phone");
+      }
+    }
+
+    if (updateData.firstName) user.firstName = updateData.firstName;
+    if (updateData?.email?.trim()) user.email = updateData?.email || "";
+    if (updateData?.phone?.trim()) user.phone = updateData?.phone || "";
+
+    await user.save();
+    return user;
+  }
+
   generateToken(userId: string, username: string): string {
     return jwt.sign({ userId, username }, config.jwtSecret, {
       expiresIn: "7d",
