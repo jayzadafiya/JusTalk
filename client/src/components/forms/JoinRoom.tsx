@@ -65,9 +65,8 @@ export const JoinRoom = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto p-6">
+    <div className="max-w-md mx-auto">
       <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-white mb-2">Join Room</h2>
         <p className="text-slate-400">Enter room code to join a call</p>
       </div>
 
@@ -107,7 +106,7 @@ export const JoinRoom = () => {
           />
         )}
 
-        <Button type="submit" loading={loading} fullWidth size="lg">
+        <Button type="submit" loading={loading} fullWidth size="md">
           {loading ? "Joining..." : "Join Room"}
         </Button>
       </form>

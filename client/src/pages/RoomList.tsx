@@ -3,6 +3,7 @@ import { Video, Users, Plus, Hash } from "lucide-react";
 import CreateRoom from "@components/forms/CreateRoom";
 import JoinRoom from "@components/forms/JoinRoom";
 import { Button } from "@components/ui/Button";
+import { Modal } from "@components/ui/Modal";
 import { getUserRooms } from "@services/room.service";
 import type { Room, User } from "@types";
 import { useNavigate } from "react-router-dom";
@@ -16,10 +17,8 @@ export const RoomList = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!showCreateRoom && !showJoinRoom) {
-      loadActiveRooms();
-    }
-  }, [showCreateRoom, showJoinRoom]);
+    loadActiveRooms();
+  }, []);
 
   useEffect(() => {
     const socket = socketService.connect();
@@ -74,22 +73,6 @@ export const RoomList = () => {
       setLoadingRooms(false);
     }
   };
-
-  if (showCreateRoom) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <CreateRoom />
-      </div>
-    );
-  }
-
-  if (showJoinRoom) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <JoinRoom />
-      </div>
-    );
-  }
 
   return (
     <div className="flex-1 flex flex-col bg-slate-900 text-white">
@@ -340,6 +323,25 @@ export const RoomList = () => {
           </div>
         )}
       </div>
+
+      {/* Modals */}
+      <Modal
+        isOpen={showCreateRoom}
+        onClose={() => setShowCreateRoom(false)}
+        title="Create Room"
+        size="md"
+      >
+        <CreateRoom />
+      </Modal>
+
+      <Modal
+        isOpen={showJoinRoom}
+        onClose={() => setShowJoinRoom(false)}
+        title="Join Room"
+        size="md"
+      >
+        <JoinRoom />
+      </Modal>
     </div>
   );
 };
