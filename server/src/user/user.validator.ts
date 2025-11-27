@@ -51,14 +51,14 @@ export const signupValidation: ValidationChain[] = [
     .withMessage("You must be at least 13 years old to register"),
 
   body("email")
-    .optional()
+    .optional({ values: "falsy" })
     .trim()
     .isEmail()
     .withMessage("Please provide a valid email address")
     .normalizeEmail(),
 
   body("phone")
-    .optional()
+    .optional({ values: "falsy" })
     .trim()
     .matches(/^\+?[1-9]\d{1,14}$/)
     .withMessage("Please provide a valid phone number in international format"),
@@ -98,14 +98,14 @@ export const updateProfileValidation: ValidationChain[] = [
     .withMessage("First name can only contain letters and spaces"),
 
   body("email")
-    .optional({ values: "null" })
+    .optional({ values: "falsy" })
     .trim()
     .isEmail()
     .withMessage("Please provide a valid email address")
     .normalizeEmail(),
 
   body("phone")
-    .optional({ values: "null" })
+    .optional({ values: "falsy" })
     .trim()
     .matches(/^\+?[1-9]\d{1,14}$/)
     .withMessage("Please provide a valid phone number in international format"),

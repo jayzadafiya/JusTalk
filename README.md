@@ -60,21 +60,6 @@ cd JusTalk
 npm run install:all
 ```
 
-Or install individually:
-
-```bash
-# Install root dependencies
-npm install
-
-# Install client dependencies
-cd client
-npm install
-
-# Install server dependencies
-cd ../server
-npm install
-```
-
 ### 3. Environment Configuration
 
 #### Server Environment Variables
