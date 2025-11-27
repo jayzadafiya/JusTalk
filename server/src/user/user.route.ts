@@ -49,4 +49,17 @@ router.post(
  */
 router.get("/profile", verifyToken, userController.getProfile);
 
+/**
+ * @route   PUT /api/user/profile
+ * @desc    Update user profile
+ * @access  Private
+ */
+router.put(
+  "/profile",
+  verifyToken,
+  userValidator.updateProfileValidation,
+  validateRequest,
+  userController.updateProfile
+);
+
 export default router;

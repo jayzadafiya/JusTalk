@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAppSelector } from "@store/hooks";
 import { socketService } from "@services/socket.service";
-import { useWebRTC } from "@hooks/useWebRTC";
+import { useIsMobile } from "@hooks/useIsMobile";
 import RemoteVideo from "@components/media/RemoteVideo";
+import DoodleCanvas from "@components/media/DoodleCanvas";
+import DoodleToolbar from "@components/media/DoodleToolbar";
 import { Button } from "@components/ui/Button";
 import {
   Mic,
@@ -12,20 +14,34 @@ import {
   VideoOff,
   PhoneOff,
   AlertCircle,
+  Pen,
+  Camera,
 } from "lucide-react";
-import type { Participant } from "@/types";
+import type { Participant, DoodleCanvasRef } from "@/types";
+import { useWebRTC } from "@/hooks/useWebRTC";
 
 export const VideoRoom = () => {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
   const user = useAppSelector((state) => state.auth.user);
   const localVideoRef = useRef<HTMLVideoElement>(null);
+  const doodleCanvasRef = useRef<DoodleCanvasRef>(null);
   const [error, setError] = useState<string>("");
   const [isInitializing, setIsInitializing] = useState(true);
   const [callEnded, setCallEnded] = useState(false);
   const [peerMediaStates, setPeerMediaStates] = useState<
     Map<string, { audioEnabled: boolean; videoEnabled: boolean }>
   >(new Map());
+  const [authChecked, setAuthChecked] = useState(false);
+
+  const [isDrawingMode, setIsDrawingMode] = useState(false);
+  const [strokeColor, setStrokeColor] = useState("#000000");
+  const [strokeWidth, setStrokeWidth] = useState(3);
+  const [canUndo, setCanUndo] = useState(false);
+  const [isCapturingScreenshot, setIsCapturingScreenshot] = useState(false);
+
+  const isMobile = useIsMobile();
+
   const {
     localStream,
     peers,
@@ -54,6 +70,15 @@ export const VideoRoom = () => {
   }, [localStream]);
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setAuthChecked(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!authChecked) return;
+
     if (!user || !code) {
       navigate("/");
       return;
@@ -216,7 +241,7 @@ export const VideoRoom = () => {
       cleanup();
       socketService.disconnect();
     };
-  }, [code, user, navigate]);
+  }, [code, user, navigate, authChecked]);
 
   const handleLeaveRoom = () => {
     socketService.emit("leave-room", { roomCode: code });
@@ -226,6 +251,116 @@ export const VideoRoom = () => {
 
   const handleRetry = () => {
     window.location.reload();
+  };
+
+  const handleToggleDrawing = () => {
+    setIsDrawingMode(!isDrawingMode);
+  };
+
+  const handleColorChange = (color: string) => {
+    setStrokeColor(color);
+  };
+
+  const handleWidthChange = (width: number) => {
+    setStrokeWidth(width);
+  };
+
+  const handleUndo = () => {
+    doodleCanvasRef.current?.undo();
+  };
+
+  const handleClearCanvas = () => {
+    doodleCanvasRef.current?.clear(false);
+  };
+
+  const handleScreenshot = async () => {
+    try {
+      setIsCapturingScreenshot(true);
+
+      const videoContainer = document.querySelector(".flex-1.p-4");
+      if (!videoContainer) {
+        throw new Error("Video container not found");
+      }
+
+      const flashDiv = document.createElement("div");
+      flashDiv.style.position = "fixed";
+      flashDiv.style.top = "0";
+      flashDiv.style.left = "0";
+      flashDiv.style.width = "100%";
+      flashDiv.style.height = "100%";
+      flashDiv.style.backgroundColor = "white";
+      flashDiv.style.opacity = "0.7";
+      flashDiv.style.zIndex = "9999";
+      flashDiv.style.pointerEvents = "none";
+      document.body.appendChild(flashDiv);
+
+      setTimeout(() => {
+        document.body.removeChild(flashDiv);
+      }, 150);
+
+      const videoElements = videoContainer.querySelectorAll("video");
+      const containerRect = videoContainer.getBoundingClientRect();
+
+      const screenshotCanvas = document.createElement("canvas");
+      screenshotCanvas.width = containerRect.width;
+      screenshotCanvas.height = containerRect.height;
+      const ctx = screenshotCanvas.getContext("2d");
+
+      if (!ctx) {
+        throw new Error("Could not get canvas context");
+      }
+
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(0, 0, screenshotCanvas.width, screenshotCanvas.height);
+
+      videoElements.forEach((video) => {
+        const videoRect = video.getBoundingClientRect();
+        const x = videoRect.left - containerRect.left;
+        const y = videoRect.top - containerRect.top;
+
+        try {
+          ctx.drawImage(video, x, y, videoRect.width, videoRect.height);
+        } catch (err) {
+          console.warn("Could not draw video element:", err);
+        }
+      });
+
+      const doodleCanvas = videoContainer.querySelector("canvas");
+      if (doodleCanvas) {
+        const doodleRect = doodleCanvas.getBoundingClientRect();
+        const x = doodleRect.left - containerRect.left;
+        const y = doodleRect.top - containerRect.top;
+
+        try {
+          ctx.drawImage(
+            doodleCanvas,
+            x,
+            y,
+            doodleRect.width,
+            doodleRect.height
+          );
+        } catch (err) {
+          console.warn("Could not draw doodle canvas:", err);
+        }
+      }
+
+      screenshotCanvas.toBlob((blob: Blob | null) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+          link.download = `JusTalk-Screenshot-${timestamp}.png`;
+          link.href = url;
+          link.click();
+          URL.revokeObjectURL(url);
+        }
+        setIsCapturingScreenshot(false);
+      }, "image/png");
+    } catch (error) {
+      console.error("Screenshot capture failed:", error);
+      setIsCapturingScreenshot(false);
+      alert("Failed to capture screenshot. Please try again.");
+    }
   };
 
   if (error) {
@@ -320,93 +455,132 @@ export const VideoRoom = () => {
       </div>
 
       <div className="flex-1 p-4 overflow-auto bg-slate-900">
-        <div
-          className={`grid gap-3 h-full auto-rows-fr ${
-            peers.size === 0
-              ? "grid-cols-1"
-              : peers.size === 1
-              ? "grid-cols-1 md:grid-cols-2"
-              : peers.size === 2
-              ? "grid-cols-1 md:grid-cols-2"
-              : peers.size === 3
-              ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-2"
-              : peers.size <= 5
-              ? "grid-cols-2 md:grid-cols-3"
-              : peers.size <= 8
-              ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-              : "grid-cols-2 md:grid-cols-4"
-          }`}
-        >
-          <div className="relative bg-slate-800 rounded-xl overflow-hidden shadow-lg border-2 border-blue-600">
-            <div className="w-full h-full min-h-[200px] relative">
-              {localStream && (
-                <video
-                  ref={localVideoRef}
-                  autoPlay
-                  muted
-                  playsInline
-                  className="w-full h-full object-cover transform scale-x-[-1] bg-black"
-                  onLoadedMetadata={() => {
-                    console.log("Local video metadata loaded");
-                    if (localVideoRef.current) {
-                      console.log(
-                        "Video dimensions:",
-                        localVideoRef.current.videoWidth,
-                        "x",
-                        localVideoRef.current.videoHeight
-                      );
-                    }
-                  }}
-                  onPlay={() => console.log("Local video is playing")}
-                  onError={(e) => console.error("Video element error:", e)}
-                />
-              )}
-              {!localStream && (
-                <div className="absolute inset-0 flex items-center justify-center bg-slate-700">
-                  <div className="text-center">
-                    <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <span className="text-white font-bold text-3xl">
-                        {user?.firstName?.charAt(0).toUpperCase() || "Y"}
-                      </span>
+        <div className="relative h-full">
+          <div
+            className={`grid gap-3 h-full auto-rows-fr ${
+              peers.size === 0
+                ? "grid-cols-1"
+                : peers.size === 1
+                ? "grid-cols-1 md:grid-cols-2"
+                : peers.size === 2
+                ? "grid-cols-1 md:grid-cols-2"
+                : peers.size === 3
+                ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-2"
+                : peers.size <= 5
+                ? "grid-cols-2 md:grid-cols-3"
+                : peers.size <= 8
+                ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+                : "grid-cols-2 md:grid-cols-4"
+            }`}
+          >
+            <div className="relative bg-slate-800 rounded-xl overflow-hidden shadow-lg border-2 border-blue-600">
+              <div className="w-full h-full min-h-[200px] relative">
+                {localStream && (
+                  <video
+                    ref={localVideoRef}
+                    autoPlay
+                    muted
+                    playsInline
+                    className="w-full h-full object-cover transform scale-x-[-1] bg-black"
+                    onLoadedMetadata={() => {
+                      console.log("Local video metadata loaded");
+                      if (localVideoRef.current) {
+                        console.log(
+                          "Video dimensions:",
+                          localVideoRef.current.videoWidth,
+                          "x",
+                          localVideoRef.current.videoHeight
+                        );
+                      }
+                    }}
+                    onPlay={() => console.log("Local video is playing")}
+                    onError={(e) => console.error("Video element error:", e)}
+                  />
+                )}
+                {!localStream && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-slate-700">
+                    <div className="text-center">
+                      <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <span className="text-white font-bold text-3xl">
+                          {user?.firstName?.charAt(0).toUpperCase() || "Y"}
+                        </span>
+                      </div>
+                      <p className="text-slate-400 text-sm">
+                        Initializing camera...
+                      </p>
                     </div>
-                    <p className="text-slate-400 text-sm">
-                      Initializing camera...
-                    </p>
                   </div>
-                </div>
-              )}
-              {!isVideoEnabled && localStream && (
-                <div className="absolute inset-0 flex items-center justify-center bg-slate-700 z-10">
-                  <div className="text-center">
-                    <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <span className="text-white font-bold text-3xl">
-                        {user?.firstName?.charAt(0).toUpperCase() || "Y"}
-                      </span>
+                )}
+                {!isVideoEnabled && localStream && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-slate-700 z-10">
+                    <div className="text-center">
+                      <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <span className="text-white font-bold text-3xl">
+                          {user?.firstName?.charAt(0).toUpperCase() || "Y"}
+                        </span>
+                      </div>
+                      <VideoOff size={32} className="text-slate-400 mx-auto" />
                     </div>
-                    <VideoOff size={32} className="text-slate-400 mx-auto" />
                   </div>
+                )}
+                <div className="absolute top-3 left-3 bg-blue-600 px-3 py-1.5 rounded-lg text-sm font-medium text-white shadow-lg z-20">
+                  You {!isVideoEnabled && "(Camera off)"}
                 </div>
-              )}
-              <div className="absolute top-3 left-3 bg-blue-600 px-3 py-1.5 rounded-lg text-sm font-medium text-white shadow-lg z-20">
-                You {!isVideoEnabled && "(Camera off)"}
+                {!isAudioEnabled && (
+                  <div className="absolute top-3 right-3 bg-red-600 p-2 rounded-lg shadow-lg z-20">
+                    <MicOff size={16} className="text-white" />
+                  </div>
+                )}
               </div>
-              {!isAudioEnabled && (
-                <div className="absolute top-3 right-3 bg-red-600 p-2 rounded-lg shadow-lg z-20">
-                  <MicOff size={16} className="text-white" />
-                </div>
-              )}
             </div>
+
+            {[...peers.values()].map((peer) => (
+              <RemoteVideo
+                key={peer.socketId}
+                peer={peer}
+                mediaState={peerMediaStates.get(peer.socketId)}
+              />
+            ))}
           </div>
 
-          {[...peers.values()].map((peer) => (
-            <RemoteVideo
-              key={peer.socketId}
-              peer={peer}
-              mediaState={peerMediaStates.get(peer.socketId)}
+          {code && user && socketService.getSocket() && (
+            <DoodleCanvas
+              ref={doodleCanvasRef}
+              roomId={code}
+              userId={user._id}
+              socket={socketService.getSocket()!}
+              strokeColor={strokeColor}
+              strokeWidth={strokeWidth}
+              enabled={isDrawingMode}
+              onUndoStackChange={setCanUndo}
+              maxStrokes={500}
+              className="z-10"
             />
-          ))}
+          )}
         </div>
       </div>
+
+      {isDrawingMode && (
+        <div
+          className={`fixed z-30 bottom-24 ${
+            isMobile
+              ? "left-1/2 transform -translate-x-1/2"
+              : "left-1/2 transform -translate-x-1/2"
+          }`}
+        >
+          <DoodleToolbar
+            isDrawingMode={isDrawingMode}
+            currentColor={strokeColor}
+            currentWidth={strokeWidth}
+            onToggleDrawing={handleToggleDrawing}
+            onColorChange={handleColorChange}
+            onWidthChange={handleWidthChange}
+            onUndo={handleUndo}
+            onClear={handleClearCanvas}
+            canUndo={canUndo}
+          />
+        </div>
+      )}
 
       <div className="h-20 bg-slate-800 border-t border-slate-700 flex items-center justify-center gap-3 px-4">
         <Button
@@ -425,6 +599,29 @@ export const VideoRoom = () => {
           title={isVideoEnabled ? "Stop Video" : "Start Video"}
         >
           {isVideoEnabled ? <Video size={22} /> : <VideoOff size={22} />}
+        </Button>
+
+        <Button
+          onClick={handleToggleDrawing}
+          variant={isDrawingMode ? "primary" : "secondary"}
+          className="w-14 h-14 p-0 rounded-full"
+          title={isDrawingMode ? "Disable Drawing" : "Enable Drawing"}
+        >
+          <Pen size={22} />
+        </Button>
+
+        <Button
+          onClick={handleScreenshot}
+          variant="secondary"
+          className="w-14 h-14 p-0 rounded-full"
+          title="Take Screenshot"
+          disabled={isCapturingScreenshot}
+        >
+          {isCapturingScreenshot ? (
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+          ) : (
+            <Camera size={22} />
+          )}
         </Button>
 
         <Button

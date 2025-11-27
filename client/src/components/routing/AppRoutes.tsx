@@ -8,6 +8,11 @@ const RoomList = lazy(() =>
 const CallList = lazy(() =>
   import("@page/CallList").then((module) => ({ default: module.CallList }))
 );
+const UserProfile = lazy(() =>
+  import("@page/UserProfile").then((module) => ({
+    default: module.UserProfile,
+  }))
+);
 
 const LoadingFallback = () => (
   <div className="flex-1 flex items-center justify-center bg-slate-800">
@@ -31,6 +36,7 @@ const AppRoutes = () => {
           <Route index element={<RoomList />} />
           <Route path="rooms" element={<RoomList />} />
           <Route path="calls" element={<CallList />} />
+          <Route path="profile" element={<UserProfile />} />
         </Route>
         <Route path="/" element={<Navigate to="/dashboard/rooms" replace />} />
       </Routes>

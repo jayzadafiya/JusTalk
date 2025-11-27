@@ -64,18 +64,6 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
             <Video size={20} />
           </span>
         </Button>
-
-        <Button
-          onClick={() => handleTabChange("chat")}
-          variant={activeTab === "chat" ? "primary" : "ghost"}
-          className={`w-10 h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 p-0 ${
-            activeTab === "chat" ? "" : "text-slate-400 hover:text-white"
-          }`}
-        >
-          <span className="flex items-center justify-center w-full h-full transform scale-100 md:scale-105 lg:scale-115">
-            <MessageSquare size={20} />
-          </span>
-        </Button>
       </div>
 
       <div className="relative">
@@ -109,6 +97,10 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
 
               <div className="p-2">
                 <Button
+                  onClick={() => {
+                    setShowMenu(false);
+                    navigate("/dashboard/profile");
+                  }}
                   variant="ghost"
                   className="w-full justify-start text-slate-300 px-3 py-2 text-sm"
                   leftIcon={<Settings size={16} />}

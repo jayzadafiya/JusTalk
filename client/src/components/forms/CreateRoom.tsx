@@ -82,55 +82,46 @@ export const CreateRoom = () => {
 
   if (roomCode) {
     return (
-      <div className="max-w-md mx-auto p-6">
-        <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
-          <h3 className="text-xl font-semibold text-white mb-4">
-            Room Created!
-          </h3>
-
-          <div className="mb-6">
-            <label className="block text-sm text-slate-400 mb-2">
-              Room Code
-            </label>
-            <div className="flex gap-2">
-              <Input
-                type="text"
-                value={roomCode}
-                readOnly
-                className="flex-1 text-center text-2xl font-mono tracking-wider bg-slate-900 border-slate-600"
-                containerClassName="flex-1"
-              />
-              <Button
-                onClick={copyCode}
-                variant="secondary"
-                size="md"
-                className="px-4"
-              >
-                {copied ? (
-                  <Check size={20} className="text-green-500" />
-                ) : (
-                  <Copy size={20} className="text-slate-300" />
-                )}
-              </Button>
-            </div>
+      <div className="max-w-md mx-auto">
+        <div className="mb-6">
+          <label className="block text-sm text-slate-400 mb-2">Room Code</label>
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              value={roomCode}
+              readOnly
+              className="flex-1 text-center text-2xl font-mono tracking-wider bg-slate-900 border-slate-600"
+              containerClassName="flex-1"
+            />
+            <Button
+              onClick={copyCode}
+              variant="secondary"
+              size="md"
+              className="px-4"
+            >
+              {copied ? (
+                <Check size={20} className="text-green-500" />
+              ) : (
+                <Copy size={20} className="text-slate-300" />
+              )}
+            </Button>
           </div>
-
-          <p className="text-sm text-slate-400 mb-6">
-            Share this code with others to invite them to your room
-          </p>
-
-          <Button onClick={joinRoom} fullWidth size="lg">
-            Join Room
-          </Button>
         </div>
+
+        <p className="text-sm text-slate-400 mb-6">
+          Share this code with others to invite them to your room
+        </p>
+
+        <Button onClick={joinRoom} fullWidth size="md">
+          Join Room
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="max-w-md mx-auto p-6">
+    <div className="max-w-md mx-auto">
       <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-white mb-2">Create Room</h2>
         <p className="text-slate-400">Start a new video call</p>
       </div>
 
@@ -165,25 +156,7 @@ export const CreateRoom = () => {
           placeholder="Leave empty for no password"
         />
 
-        <div>
-          <label className="block text-sm text-slate-300 mb-2">
-            Max Participants
-          </label>
-          <select
-            name="maxParticipants"
-            value={formData.maxParticipants}
-            onChange={handleChange}
-            className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-600"
-          >
-            {[2, 3, 4, 5, 6, 7, 8].map((num) => (
-              <option key={num} value={num}>
-                {num} people
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <Button type="submit" loading={loading} fullWidth size="lg">
+        <Button type="submit" loading={loading} fullWidth size="md">
           {loading ? "Creating..." : "Create Room"}
         </Button>
       </form>

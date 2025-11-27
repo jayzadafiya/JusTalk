@@ -38,6 +38,7 @@ const userSchema = new Schema<IUser, IUserModel>(
       type: String,
       required: [true, "Password is required"],
       minlength: [8, "Password must be at least 8 characters"],
+      select: false,
     },
     firstName: {
       type: String,
@@ -105,6 +106,7 @@ userSchema.statics.isUsernameTaken = async function (
 userSchema.methods.toJSON = function () {
   const user = this.toObject();
   delete user.password;
+  delete user.__v;
   return user;
 };
 
