@@ -17,6 +17,9 @@ export default defineConfig({
       "@hooks": path.resolve(__dirname, "./src/hooks"),
     },
   },
+  esbuild: {
+    drop: ["console", "debugger"],
+  },
   server: {
     port: 3000,
     proxy: {
