@@ -13,6 +13,7 @@
   "dependencies": {
     "@reduxjs/toolkit": "^2.0.1",
     "axios": "^1.6.2",
+    "html2canvas": "^1.4.1",
     "lucide-react": "^0.294.0",
     "moment": "^2.29.4",
     "react": "^18.2.0",
@@ -21,13 +22,16 @@
     "react-hook-form": "^7.48.2",
     "react-redux": "^9.2.0",
     "react-router-dom": "^6.20.0",
-    "socket.io-client": "^4.7.2"
+    "socket.io-client": "^4.7.2",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
+    "@types/html2canvas": "^0.5.35",
     "@types/moment": "^2.13.0",
     "@types/react": "^18.2.43",
     "@types/react-beautiful-dnd": "^13.1.8",
     "@types/react-dom": "^18.2.17",
+    "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^6.14.0",
     "@typescript-eslint/parser": "^6.14.0",
     "@vitejs/plugin-react": "^4.2.1",
