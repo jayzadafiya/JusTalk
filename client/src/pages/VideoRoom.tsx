@@ -562,10 +562,10 @@ export const VideoRoom = () => {
 
       {isDrawingMode && (
         <div
-          className={`fixed z-30 ${
+          className={`fixed z-30 bottom-24 ${
             isMobile
-              ? "bottom-24 right-4"
-              : "bottom-24 left-1/2 transform -translate-x-1/2"
+              ? "left-1/2 transform -translate-x-1/2"
+              : "left-1/2 transform -translate-x-1/2"
           }`}
         >
           <DoodleToolbar

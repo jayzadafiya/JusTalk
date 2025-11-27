@@ -17,7 +17,7 @@ const app: Application = express();
 const httpServer = createServer(app);
 const io = new SocketIOServer(httpServer, {
   cors: {
-    origin: "*",
+    origin: config.corsOrigin,
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -28,7 +28,7 @@ app.use(compression());
 app.use(morgan("dev"));
 app.use(
   cors({
-    origin: "*",
+    origin: config.corsOrigin,
     credentials: true,
   })
 );

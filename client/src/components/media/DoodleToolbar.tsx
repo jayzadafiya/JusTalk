@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Pen, Trash2, Undo, X } from "lucide-react";
 import { useIsMobile } from "@hooks/useIsMobile";
 
@@ -44,7 +44,33 @@ export const DoodleToolbar: React.FC<DoodleToolbarProps> = ({
 }) => {
   const [showColorPicker, setShowColorPicker] = React.useState(false);
   const [showWidthPicker, setShowWidthPicker] = React.useState(false);
+  const colorPickerRef = React.useRef<HTMLDivElement>(null);
+  const widthPickerRef = React.useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        colorPickerRef.current &&
+        !colorPickerRef.current.contains(event.target as Node)
+      ) {
+        setShowColorPicker(false);
+      }
+      if (
+        widthPickerRef.current &&
+        !widthPickerRef.current.contains(event.target as Node)
+      ) {
+        setShowWidthPicker(false);
+      }
+    };
+
+    if (showColorPicker || showWidthPicker) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [showColorPicker, showWidthPicker]);
 
   return (
     <div
@@ -75,7 +101,7 @@ export const DoodleToolbar: React.FC<DoodleToolbarProps> = ({
               className={`w-px h-6 bg-slate-600/50 ${isMobile ? "mx-1" : ""}`}
             />
 
-            <div className="relative h-[32px]">
+            <div className="relative h-[32px]" ref={colorPickerRef}>
               <button
                 onClick={() => setShowColorPicker(!showColorPicker)}
                 className={`rounded-xl border-2 border-slate-600/50 shadow-sm hover:border-slate-500 transition-all duration-200 hover:scale-105 ${
@@ -86,11 +112,11 @@ export const DoodleToolbar: React.FC<DoodleToolbarProps> = ({
               />
               {showColorPicker && (
                 <div
-                  className={`absolute top-12 left-0 bg-slate-800/95 backdrop-blur-sm border border-slate-700/50 rounded-xl p-2 shadow-2xl z-50 ${
-                    isMobile ? "min-w-[180px]" : ""
+                  className={`absolute bottom-full mb-2 left-0 bg-slate-800/95 backdrop-blur-sm border border-slate-700/50 rounded-xl p-2 shadow-2xl z-50 ${
+                    isMobile ? "min-w-[180px]" : "min-w-[200px]"
                   }`}
                 >
-                  <div className="grid grid-cols-5 gap-1 mb-2">
+                  <div className="grid grid-cols-5 gap-2 mb-2">
                     {PRESET_COLORS.map((color) => (
                       <button
                         key={color}
@@ -119,7 +145,7 @@ export const DoodleToolbar: React.FC<DoodleToolbarProps> = ({
               )}
             </div>
 
-            <div className="relative">
+            <div className="relative" ref={widthPickerRef}>
               <button
                 onClick={() => setShowWidthPicker(!showWidthPicker)}
                 className={`rounded-xl border-2 border-slate-600/50 bg-slate-700/50 hover:border-slate-500 transition-all duration-200 hover:scale-105 flex items-center justify-center ${
@@ -143,7 +169,7 @@ export const DoodleToolbar: React.FC<DoodleToolbarProps> = ({
               </button>
               {showWidthPicker && (
                 <div
-                  className={`absolute top-12 left-0 bg-slate-800/95 backdrop-blur-sm border border-slate-700/50 rounded-xl p-2 shadow-2xl z-50 ${
+                  className={`absolute bottom-full mb-2 left-0 bg-slate-800/95 backdrop-blur-sm border border-slate-700/50 rounded-xl p-2 shadow-2xl z-50 ${
                     isMobile ? "min-w-[140px]" : "min-w-[120px]"
                   }`}
                 >
